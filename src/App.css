@@ -79,41 +79,67 @@ body {
 
 .TodoForm {
   width: 100%;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(180deg, rgba(22, 22, 30, 0.95), rgba(16, 16, 22, 0.96));
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
   margin-bottom: 36px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
-.TodoForm svg {
-  color: #7b7689;
-  font-size: 1.15rem;
-  flex-shrink: 0;
+.todo-form-shell {
+  background: linear-gradient(180deg, rgba(22, 22, 30, 0.95), rgba(16, 16, 22, 0.96));
 }
 
-.todo-input {
-  width: 100%;
+.todo-form-header {
+  padding-bottom: 18px;
+}
+
+.todo-form-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #8a8698;
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.todo-form-kicker-icon {
+  font-size: 0.95rem;
+  color: #9891aa;
+}
+
+.todo-form-title {
+  color: #fff7ef;
+}
+
+.todo-form-grid,
+.todo-form-inline {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.todo-form-grid input,
+.todo-form-inline input {
   min-width: 0;
-  background: transparent;
-  border: 0;
-  outline: none;
+  background: rgba(8, 8, 12, 0.65);
+  border-color: rgba(255, 255, 255, 0.08);
   color: var(--text);
-  font-size: 1.1rem;
-  padding: 2px 4px;
 }
 
-.todo-input::placeholder {
+.todo-form-grid input::placeholder,
+.todo-form-inline input::placeholder {
   color: #696577;
 }
 
-.todo-btn {
-  display: none;
+.todo-form-grid button {
+  min-width: 132px;
+}
+
+.todo-form-inline {
+  padding: 16px 18px;
+  background: linear-gradient(180deg, rgba(22, 22, 30, 0.95), rgba(16, 16, 22, 0.96));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .Todo {
@@ -216,10 +242,16 @@ body {
   }
 
   .TodoForm {
-    grid-template-columns: auto 1fr;
+    margin-bottom: 24px;
   }
 
-  .todo-btn {
+  .todo-form-grid,
+  .todo-form-inline {
+    grid-template-columns: 1fr;
+  }
+
+  .todo-form-grid button,
+  .todo-form-inline button {
     width: 100%;
   }
 

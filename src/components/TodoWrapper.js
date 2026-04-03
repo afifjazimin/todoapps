@@ -7,7 +7,7 @@ import { Todo } from "./Todo.js";
 import { EditTodoForm } from "./EditTodoForm.js";
 uuidv4(); // Example usage of uuidv4 to generate a unique ID
 
-export const TodoWrapper = ({ }) => {
+export const TodoWrapper = () => {
     const [todos, setTodos] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
 
