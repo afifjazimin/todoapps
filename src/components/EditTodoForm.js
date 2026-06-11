@@ -4,8 +4,9 @@ import { Input } from "./ui/input";
 
 export const EditTodoForm = ({ editTodo, task }) => {
     const [value, setValue] = useState(task.task);
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const trimmedValue = value.trim();
 
@@ -13,7 +14,12 @@ export const EditTodoForm = ({ editTodo, task }) => {
             return;
         }
 
-        editTodo(trimmedValue, task.id);
+        setSubmitting(true);
+        const saved = await editTodo(trimmedValue, task.id);
+        setSubmitting(false);
+        if (!saved) {
+            setValue(trimmedValue);
+        }
     }
 
     return (
@@ -23,7 +29,9 @@ export const EditTodoForm = ({ editTodo, task }) => {
                 placeholder="Update Task"
                 onChange={(e) => setValue(e.target.value)}
             />
-            <Button type="submit" variant="secondary">Update Task</Button>
+            <Button type="submit" variant="secondary" disabled={submitting}>
+                {submitting ? "Updating..." : "Update Task"}
+            </Button>
         </form>
     )
 }

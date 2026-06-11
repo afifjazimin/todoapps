@@ -7,8 +7,9 @@ import { Input } from "./ui/input";
 
 export const TodoForm = ({addTodo}) => {
     const [value, setValue] = useState("")
+    const [submitting, setSubmitting] = useState(false)
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const trimmedValue = value.trim();
 
@@ -16,9 +17,12 @@ export const TodoForm = ({addTodo}) => {
             return;
         }
 
-        addTodo(trimmedValue);
-
-        setValue("");
+        setSubmitting(true);
+        const saved = await addTodo(trimmedValue);
+        setSubmitting(false);
+        if (saved) {
+            setValue("");
+        }
     }
 
 
@@ -41,7 +45,9 @@ export const TodoForm = ({addTodo}) => {
                         placeholder="Add a New Task . . ."
                         onChange={(e) => setValue(e.target.value)}
                     />
-                    <Button type="submit">Add Task</Button>
+                    <Button type="submit" disabled={submitting}>
+                        {submitting ? "Adding..." : "Add Task"}
+                    </Button>
                 </form>
             </CardContent>
         </Card>
