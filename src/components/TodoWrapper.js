@@ -1,13 +1,12 @@
-﻿import React, {useCallback, useEffect, useState} from "react";
-import { 
-  CheckSquare, 
-  Calendar as LucideCalendar, 
-  Clock as LucideClock, 
-  LogOut, 
-  ListTodo, 
-  ChevronLeft, 
-  ChevronRight,
-  LayoutDashboard
+import React, { useCallback, useEffect, useState } from "react";
+import {
+    CheckSquare,
+    Calendar as LucideCalendar,
+    LogOut,
+    ListTodo,
+    ChevronLeft,
+    ChevronRight,
+    LayoutDashboard
 } from "lucide-react";
 import { TodoForm } from "./TodoForm";
 import { Todo } from "./Todo.js";
@@ -111,7 +110,7 @@ export const TodoWrapper = () => {
             return;
         }
 
-        setTodos(todos.map(todo => todo.id === id ? {...todo, completed: !todo.completed} : todo));
+        setTodos(todos.map(todo => todo.id === id ? { ...todo, completed: !todo.completed } : todo));
     };
 
     const deleteTodo = async id => {
@@ -130,7 +129,7 @@ export const TodoWrapper = () => {
     };
 
     const editTodo = id => {
-        setTodos(todos.map(todo => todo.id === id ? {...todo, isEditing: !todo.isEditing} : todo));
+        setTodos(todos.map(todo => todo.id === id ? { ...todo, isEditing: !todo.isEditing } : todo));
     };
 
     const editTask = async (task, id) => {
@@ -148,7 +147,7 @@ export const TodoWrapper = () => {
             return false;
         }
 
-        setTodos(todos.map(todo => todo.id === id ? {...todo, task, isEditing: !todo.isEditing} : todo));
+        setTodos(todos.map(todo => todo.id === id ? { ...todo, task, isEditing: !todo.isEditing } : todo));
         return true;
     };
 
@@ -198,9 +197,9 @@ export const TodoWrapper = () => {
         const firstDay = new Date(year, month, 1);
         const startDayIndex = firstDay.getDay();
         const totalDays = new Date(year, month + 1, 0).getDate();
-        
+
         const days = [];
-        
+
         // Previous month padding
         const prevMonthTotalDays = new Date(year, month, 0).getDate();
         for (let i = startDayIndex - 1; i >= 0; i--) {
@@ -210,7 +209,7 @@ export const TodoWrapper = () => {
                 date: new Date(year, month - 1, prevMonthTotalDays - i)
             });
         }
-        
+
         // Current month days
         for (let i = 1; i <= totalDays; i++) {
             days.push({
@@ -219,7 +218,7 @@ export const TodoWrapper = () => {
                 date: new Date(year, month, i)
             });
         }
-        
+
         // Next month padding
         const totalCells = 42;
         const remainingCells = totalCells - days.length;
@@ -230,7 +229,7 @@ export const TodoWrapper = () => {
                 date: new Date(year, month + 1, i)
             });
         }
-        
+
         return days;
     };
 
@@ -298,14 +297,14 @@ export const TodoWrapper = () => {
                 {/* Navigation Group */}
                 <div className="db-sidebar-section">
                     <span className="db-sidebar-section-title">Navigation</span>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "home" ? "active" : ""}`}
                         onClick={() => setActiveTab("home")}
                     >
                         <ListTodo size={16} />
                         <span>Home</span>
                     </button>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "calendar" ? "active" : ""}`}
                         onClick={() => setActiveTab("calendar")}
                     >
@@ -317,7 +316,7 @@ export const TodoWrapper = () => {
                 {/* Categories Group (only active in Home Tab) */}
                 <div className="db-sidebar-section">
                     <span className="db-sidebar-section-title">Categories</span>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "home" && activeCategory === "all" ? "active" : ""}`}
                         onClick={() => {
                             setActiveTab("home");
@@ -328,7 +327,7 @@ export const TodoWrapper = () => {
                         <span>All Focus Items</span>
                         <span className="cat-count">{getCategoryCount("all")}</span>
                     </button>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "home" && activeCategory === "personal" ? "active" : ""}`}
                         onClick={() => {
                             setActiveTab("home");
@@ -339,7 +338,7 @@ export const TodoWrapper = () => {
                         <span>Personal</span>
                         <span className="cat-count">{getCategoryCount("personal")}</span>
                     </button>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "home" && activeCategory === "work" ? "active" : ""}`}
                         onClick={() => {
                             setActiveTab("home");
@@ -350,7 +349,7 @@ export const TodoWrapper = () => {
                         <span>Work</span>
                         <span className="cat-count">{getCategoryCount("work")}</span>
                     </button>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "home" && activeCategory === "shopping" ? "active" : ""}`}
                         onClick={() => {
                             setActiveTab("home");
@@ -361,7 +360,7 @@ export const TodoWrapper = () => {
                         <span>Shopping</span>
                         <span className="cat-count">{getCategoryCount("shopping")}</span>
                     </button>
-                    <button 
+                    <button
                         className={`sidebar-item ${activeTab === "home" && activeCategory === "fitness" ? "active" : ""}`}
                         onClick={() => {
                             setActiveTab("home");
@@ -382,8 +381,8 @@ export const TodoWrapper = () => {
                             <span className="sidebar-progress-percentage">{progressPercentage}%</span>
                         </div>
                         <div className="sidebar-progress-bar">
-                            <div 
-                                className="sidebar-progress-fill" 
+                            <div
+                                className="sidebar-progress-fill"
                                 style={{ width: `${progressPercentage}%` }}
                             ></div>
                         </div>
@@ -397,7 +396,7 @@ export const TodoWrapper = () => {
 
             {/* Main Content Dashboard Panel */}
             <main className="db-content-area">
-                
+
                 {/* Dashboard Header Bar */}
                 <header className="db-content-header">
                     <div className="db-welcome-banner">
@@ -415,22 +414,22 @@ export const TodoWrapper = () => {
                         <h2 className="db-view-heading">
                             {activeCategory === "all" ? "Today's Focus" : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Focus`}
                         </h2>
-                        
+
                         <TodoForm addTodo={addTodo} />
-                        
+
                         {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '16px' }}>{actionError}</div>}
                         {loadingTodos && <p className="todo-empty">Loading your tasks...</p>}
                         {!loadingTodos && filteredTodos.length === 0 && (
                             <p className="todo-empty">No tasks categorized under this group yet.</p>
                         )}
-                        
+
                         {filteredTodos.map((todo) => (
                             todo.isEditing ? (
                                 <EditTodoForm key={todo.id} editTodo={editTask} task={todo} />
                             ) : (
-                                <Todo 
-                                    task={todo} 
-                                    key={todo.id} 
+                                <Todo
+                                    task={todo}
+                                    key={todo.id}
                                     toggleComplete={toggleComplete}
                                     deleteTodo={deleteTodo}
                                     editTodo={editTodo}
@@ -497,10 +496,10 @@ export const TodoWrapper = () => {
 
                                 {/* Legend */}
                                 <div className="db-cal-legend">
-                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#f97316'}}></span>Personal</span>
-                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#3b82f6'}}></span>Work</span>
-                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#8b5cf6'}}></span>Shopping</span>
-                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#10b981'}}></span>Fitness</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{ background: '#f97316' }}></span>Personal</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{ background: '#3b82f6' }}></span>Work</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{ background: '#8b5cf6' }}></span>Shopping</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{ background: '#10b981' }}></span>Fitness</span>
                                 </div>
                             </div>
 
@@ -530,10 +529,10 @@ export const TodoWrapper = () => {
                                     {filteredTodos.length === 0 ? (
                                         <div className="db-cal-empty-state">
                                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                                <line x1="3" y1="10" x2="21" y2="10"/>
+                                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                                <line x1="16" y1="2" x2="16" y2="6" />
+                                                <line x1="8" y1="2" x2="8" y2="6" />
+                                                <line x1="3" y1="10" x2="21" y2="10" />
                                             </svg>
                                             <p>No tasks on this day</p>
                                             <span>Tasks created on this date will appear here</span>
