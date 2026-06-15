@@ -3,10 +3,9 @@ import { Link, Navigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { useAuth } from '../context/AuthContext';
 import { isSupabaseConfigured, supabase } from '../supabaseClient';
+import '../styles/LandingPage.css';
 
 export default function Signup() {
   const { user } = useAuth();
@@ -66,44 +65,60 @@ export default function Signup() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <div className="auth-copy">
-          <span className="auth-kicker">New workspace</span>
+    <main className="modern-auth-container">
+      <div className="dot-grid-bg"></div>
+
+      <section className="modern-auth-card">
+        <div className="modern-auth-logo">
+          <div className="modern-auth-logo-dots">
+            <span className="modern-auth-logo-dot blue"></span>
+            <span className="modern-auth-logo-dot"></span>
+            <span className="modern-auth-logo-dot"></span>
+            <span className="modern-auth-logo-dot"></span>
+          </div>
+          <span className="modern-auth-brand-name">TodoApps</span>
+        </div>
+
+        <div className="modern-auth-header">
+          <span className="modern-auth-kicker">New workspace</span>
           <h1>Create account</h1>
           <p>Your todos will be stored per user with Supabase row security.</p>
         </div>
 
-        <form className="auth-form" onSubmit={handleSignup}>
-          {error && <p className="auth-error">{error}</p>}
-          {message && <p className="auth-success">{message}</p>}
-          <Input
+        <form className="modern-auth-form" onSubmit={handleSignup}>
+          {error && <div className="modern-auth-alert error">{error}</div>}
+          {message && <div className="modern-auth-alert success">{message}</div>}
+          <input
             type="email"
             value={email}
             placeholder="Email address"
+            className="modern-auth-input"
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
+          <input
             type="password"
             value={password}
             placeholder="Password"
             minLength={6}
+            className="modern-auth-input"
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" disabled={loading}>
+          <button type="submit" className="modern-auth-btn-primary" disabled={loading}>
             <FontAwesomeIcon icon={faUserPlus} />
             {loading ? 'Creating...' : 'Sign up'}
-          </Button>
+          </button>
         </form>
 
-        <Button className="auth-google" type="button" variant="secondary" onClick={handleGoogleLogin}>
+        <div className="modern-auth-divider">or</div>
+
+        <button className="modern-auth-google-btn" type="button" onClick={handleGoogleLogin}>
           <FontAwesomeIcon icon={faGoogle} />
           Continue with Google
-        </Button>
+        </button>
 
-        <p className="auth-switch">
+        <p className="modern-auth-switch">
           Already registered? <Link to="/login">Login</Link>
         </p>
       </section>

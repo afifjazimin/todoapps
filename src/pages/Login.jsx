@@ -3,10 +3,9 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { faArrowRightToBracket } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { useAuth } from '../context/AuthContext';
 import { isSupabaseConfigured, supabase } from '../supabaseClient';
+import '../styles/LandingPage.css';
 
 export default function Login() {
   const { user } = useAuth();
@@ -65,42 +64,58 @@ export default function Login() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <div className="auth-copy">
-          <span className="auth-kicker">Todo credentials</span>
+    <main className="modern-auth-container">
+      <div className="dot-grid-bg"></div>
+
+      <section className="modern-auth-card">
+        <div className="modern-auth-logo">
+          <div className="modern-auth-logo-dots">
+            <span className="modern-auth-logo-dot blue"></span>
+            <span className="modern-auth-logo-dot"></span>
+            <span className="modern-auth-logo-dot"></span>
+            <span className="modern-auth-logo-dot"></span>
+          </div>
+          <span className="modern-auth-brand-name">TodoApps</span>
+        </div>
+
+        <div className="modern-auth-header">
+          <span className="modern-auth-kicker">Todo credentials</span>
           <h1>Welcome back</h1>
           <p>Sign in to keep your tasks synced with your Supabase account.</p>
         </div>
 
-        <form className="auth-form" onSubmit={handleLogin}>
-          {error && <p className="auth-error">{error}</p>}
-          <Input
+        <form className="modern-auth-form" onSubmit={handleLogin}>
+          {error && <div className="modern-auth-alert error">{error}</div>}
+          <input
             type="email"
             value={email}
             placeholder="Email address"
+            className="modern-auth-input"
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
+          <input
             type="password"
             value={password}
             placeholder="Password"
+            className="modern-auth-input"
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" disabled={loading}>
+          <button type="submit" className="modern-auth-btn-primary" disabled={loading}>
             <FontAwesomeIcon icon={faArrowRightToBracket} />
             {loading ? 'Signing in...' : 'Login'}
-          </Button>
+          </button>
         </form>
 
-        <Button className="auth-google" type="button" variant="secondary" onClick={handleGoogleLogin}>
+        <div className="modern-auth-divider">or</div>
+
+        <button className="modern-auth-google-btn" type="button" onClick={handleGoogleLogin}>
           <FontAwesomeIcon icon={faGoogle} />
           Continue with Google
-        </Button>
+        </button>
 
-        <p className="auth-switch">
+        <p className="modern-auth-switch">
           No account yet? <Link to="/signup">Create one</Link>
         </p>
       </section>

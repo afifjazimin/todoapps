@@ -15,13 +15,13 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={<div className="App"><Login /></div>} />
-      <Route path="/signup" element={<div className="App"><Signup /></div>} />
+      <Route path="/login" element={<div className="landing-page"><Login /></div>} />
+      <Route path="/signup" element={<div className="landing-page"><Signup /></div>} />
       <Route
         path="/"
         element={
           user ? (
-            <div className="App"><Home /></div>
+            <div className="landing-page"><Home /></div>
           ) : (
             <LandingPage />
           )

@@ -1,6 +1,4 @@
 import React, {useState} from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 
 export const EditTodoForm = ({ editTodo, task }) => {
     const [value, setValue] = useState(task.task);
@@ -23,15 +21,18 @@ export const EditTodoForm = ({ editTodo, task }) => {
     }
 
     return (
-        <form className="TodoForm todo-form-inline" onSubmit={handleSubmit}>
-            <Input
+        <form className="db-form-card db-edit-form" onSubmit={handleSubmit}>
+            <input
+                type="text"
                 value={value}
+                className="db-form-input"
                 placeholder="Update Task"
                 onChange={(e) => setValue(e.target.value)}
+                required
             />
-            <Button type="submit" variant="secondary" disabled={submitting}>
+            <button type="submit" className="db-form-btn-submit" disabled={submitting}>
                 {submitting ? "Updating..." : "Update Task"}
-            </Button>
+            </button>
         </form>
     )
 }

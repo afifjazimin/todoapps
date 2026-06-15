@@ -1,13 +1,10 @@
 import React, {useState} from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {faSquarePlus } from '@fortawesome/free-regular-svg-icons'
-import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Input } from "./ui/input";
+import { Plus } from "lucide-react";
 
 export const TodoForm = ({addTodo}) => {
-    const [value, setValue] = useState("")
-    const [submitting, setSubmitting] = useState(false)
+    const [value, setValue] = useState("");
+    const [category, setCategory] = useState("personal");
+    const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,38 +15,67 @@ export const TodoForm = ({addTodo}) => {
         }
 
         setSubmitting(true);
-        const saved = await addTodo(trimmedValue);
+        // Append category tag to the todo title
+        const fullTitle = `${trimmedValue} #${category}`;
+        const saved = await addTodo(fullTitle);
         setSubmitting(false);
         if (saved) {
             setValue("");
         }
     }
 
-
     return (
-        <Card className="TodoForm todo-form-shell border-white/10 bg-white/5 shadow-[0_18px_40px_rgba(0,0,0,0.22)] backdrop-blur">
-            <CardHeader className="todo-form-header">
-                <div className="todo-form-kicker">
-                    <FontAwesomeIcon icon={faSquarePlus} className="todo-form-kicker-icon" />
-                    Quick capture
-                </div>
-                <CardTitle className="todo-form-title">Add a new task</CardTitle>
-                <CardDescription>
-                    Keep it short and clear so your next step is obvious.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form className="todo-form-grid" onSubmit={handleSubmit}>
-                    <Input
+        <div className="db-form-card">
+            <form onSubmit={handleSubmit}>
+                <div className="db-form-row">
+                    <input
+                        type="text"
                         value={value}
-                        placeholder="Add a New Task . . ."
+                        className="db-form-input"
+                        placeholder="Add a new task focus item..."
                         onChange={(e) => setValue(e.target.value)}
+                        required
                     />
-                    <Button type="submit" disabled={submitting}>
+                    <button type="submit" className="db-form-btn-submit" disabled={submitting}>
+                        <Plus size={16} />
                         {submitting ? "Adding..." : "Add Task"}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+                    </button>
+                </div>
+                
+                <div className="db-tag-select-container">
+                    <span className="db-tag-select-label">Categorize:</span>
+                    <div className="db-tag-options">
+                        <button
+                            type="button"
+                            className={`db-tag-btn tag-personal ${category === "personal" ? "active" : ""}`}
+                            onClick={() => setCategory("personal")}
+                        >
+                            Personal
+                        </button>
+                        <button
+                            type="button"
+                            className={`db-tag-btn tag-work ${category === "work" ? "active" : ""}`}
+                            onClick={() => setCategory("work")}
+                        >
+                            Work
+                        </button>
+                        <button
+                            type="button"
+                            className={`db-tag-btn tag-shopping ${category === "shopping" ? "active" : ""}`}
+                            onClick={() => setCategory("shopping")}
+                        >
+                            Shopping
+                        </button>
+                        <button
+                            type="button"
+                            className={`db-tag-btn tag-fitness ${category === "fitness" ? "active" : ""}`}
+                            onClick={() => setCategory("fitness")}
+                        >
+                            Fitness
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     )
 }

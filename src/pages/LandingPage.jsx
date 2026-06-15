@@ -94,7 +94,7 @@ const LandingPage = () => {
           <div className="hero-canvas">
 
             {/* Widget 1: Top Left - Sticky Note + Floating Checkbox */}
-            <div className="widget widget-sticky-note float-animation-1">
+            <div className="widget widget-sticky-note">
               <div className="sticky-pin">
                 <Pin size={16} fill="#ef4444" color="#ef4444" />
               </div>
@@ -103,7 +103,7 @@ const LandingPage = () => {
               </p>
 
               {/* Overlay Checkbox Widget */}
-              <div className="nested-widget widget-check float-animation-sub">
+              <div className="nested-widget widget-check">
                 <span className="check-box-blue">
                   <CheckCircle size={14} color="#ffffff" fill="#2563eb" />
                 </span>
@@ -111,7 +111,7 @@ const LandingPage = () => {
             </div>
 
             {/* Widget 2: Top Right - Reminders + Clock Icon */}
-            <div className="widget widget-reminders float-animation-2">
+            <div className="widget widget-reminders">
               <div className="reminders-header">
                 <span className="reminders-dot"></span>
                 <span className="reminders-title">Reminders</span>
@@ -126,7 +126,7 @@ const LandingPage = () => {
               </div>
 
               {/* Overlay Clock Widget */}
-              <div className="nested-widget widget-clock float-animation-sub-delayed">
+              <div className="nested-widget widget-clock">
                 <div className="clock-icon-wrapper">
                   <Clock size={20} color="#111827" />
                 </div>
@@ -134,7 +134,7 @@ const LandingPage = () => {
             </div>
 
             {/* Widget 3: Bottom Left - Today's Tasks */}
-            <div className="widget widget-tasks float-animation-3">
+            <div className="widget widget-tasks">
               <h3 className="tasks-header">Today's tasks</h3>
               <div className="tasks-list">
 
@@ -173,7 +173,7 @@ const LandingPage = () => {
             </div>
 
             {/* Widget 4: Bottom Right - Integrations */}
-            <div className="widget widget-integrations float-animation-4">
+            <div className="widget widget-integrations">
               <h3 className="integrations-header">100+ Integrations</h3>
               <div className="integration-icons">
 
@@ -447,59 +447,126 @@ const LandingPage = () => {
       {/* Benefits Section */}
       <section id="benefits" className="benefits">
         <div className="benefits-container">
-          <div className="benefits-grid">
-            <div className="benefits-header-col">
-              <span className="section-badge">Why Us</span>
-              <h2>Why Choose TodoApps?</h2>
-              <p>We combine minimalist design with powerful functionality to provide the ultimate productivity companion.</p>
-              <button
-                className="benefits-btn-link"
-                onClick={() => navigate('/signup')}
-              >
-                <span>Get started today</span>
-                <ChevronRight size={16} />
-              </button>
+          {/* Centered Section Header */}
+          <div className="benefits-section-header">
+            <span className="section-badge-pill">Testimonials</span>
+            <h2>People just like you are already using TodoApps</h2>
+          </div>
+
+          {/* Testimonial Masonry Grid */}
+          <div className="testimonial-grid">
+
+            {/* Column 1 */}
+            <div className="testimonial-col">
+
+              {/* Testimonial 1 (Tall) */}
+              <div className="testimonial-card testimonial-tall card-has-overlay">
+                {/* Floating chat bubble overlay */}
+                <div className="speech-bubble-overlay">
+                  <span className="speech-dots">...</span>
+                </div>
+                <p className="testimonial-quote">
+                  "This task manager has completely transformed the way my team works. We stay focused on what truly matters to unlock deep work and always meet deadlines."
+                </p>
+                <div className="testimonial-user">
+                  <div className="t-user-avatar bg-blue-avatar">J</div>
+                  <div className="t-user-info">
+                    <h4 className="t-user-name">John D.</h4>
+                    <p className="t-user-role">Marketing Lead</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Testimonial 2 (Small) */}
+              <div className="testimonial-card testimonial-small">
+                <p className="testimonial-quote">
+                  "I love how easy it is to create and assign tasks. Ideas are captured instantly before they slip away from memory."
+                </p>
+                <div className="testimonial-user">
+                  <div className="t-user-avatar bg-orange-avatar">D</div>
+                  <div className="t-user-info">
+                    <h4 className="t-user-name">Daniela T.</h4>
+                    <p className="t-user-role">Operations Manager</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
-            <div className="benefits-list-col">
-              <ul className="benefits-list">
-                <li>
-                  <div className="benefit-icon">
-                    <CheckCircle size={20} />
+
+            {/* Column 2 */}
+            <div className="testimonial-col">
+
+              {/* Testimonial 3 (Small) */}
+              <div className="testimonial-card testimonial-small">
+                <p className="testimonial-quote">
+                  "The metrics and progress bars help me visualize my completion and achieve more every day."
+                </p>
+                <div className="testimonial-user">
+                  <div className="t-user-avatar bg-green-avatar">S</div>
+                  <div className="t-user-info">
+                    <h4 className="t-user-name">Sarah W.</h4>
+                    <p className="t-user-role">Freelance Designer</p>
                   </div>
-                  <div>
-                    <h4>Stay Focused</h4>
-                    <p>Eliminate distractions and focus on what truly matters to unlock deep work.</p>
+                </div>
+              </div>
+
+              {/* Testimonial 4 (Tall) */}
+              <div className="testimonial-card testimonial-tall">
+                <p className="testimonial-quote">
+                  "Everything is securely synced, organized, and backed up in real-time. It gives me complete peace of mind and keeps my freelance projects running smoothly."
+                </p>
+                <div className="testimonial-user">
+                  <div className="t-user-avatar bg-purple-avatar">A</div>
+                  <div className="t-user-info">
+                    <h4 className="t-user-name">Alex M.</h4>
+                    <p className="t-user-role">Freelance Developer</p>
                   </div>
-                </li>
-                <li>
-                  <div className="benefit-icon">
-                    <CheckCircle size={20} />
-                  </div>
-                  <div>
-                    <h4>Never Forget</h4>
-                    <p>Capture ideas instantly into your inbox before they slip away from memory.</p>
-                  </div>
-                </li>
-                <li>
-                  <div className="benefit-icon">
-                    <CheckCircle size={20} />
-                  </div>
-                  <div>
-                    <h4>Achieve More</h4>
-                    <p>Track progress, visualize your completion metrics, and celebrate completed milestones.</p>
-                  </div>
-                </li>
-                <li>
-                  <div className="benefit-icon">
-                    <CheckCircle size={20} />
-                  </div>
-                  <div>
-                    <h4>Peace of Mind</h4>
-                    <p>Everything is securely synced, organized, and backed up in real-time.</p>
-                  </div>
-                </li>
-              </ul>
+                </div>
+              </div>
+
             </div>
+
+            {/* Column 3 */}
+            <div className="testimonial-col">
+
+              {/* Testimonial 5 (Small) */}
+              <div className="testimonial-card testimonial-small">
+                <p className="testimonial-quote">
+                  "The built-in analytics give me a complete overview of our team's productivity."
+                </p>
+                <div className="testimonial-user">
+                  <div className="t-user-avatar bg-teal-avatar">S</div>
+                  <div className="t-user-info">
+                    <h4 className="t-user-name">Sam J.</h4>
+                    <p className="t-user-role">Project Coordinator</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Video Testimonial Card (Tall) */}
+              <div className="testimonial-video-card">
+                <img
+                  src="/images/testimonial_video_thumb.png"
+                  alt="User speaking video thumbnail"
+                  className="t-video-image"
+                />
+
+                {/* Watch video action button overlay */}
+                <div className="t-video-play-action">
+                  <span className="play-triangle">▶</span>
+                  <span>Watch video review</span>
+                </div>
+
+                {/* Overlapping YouTube Red Sticker */}
+                <div className="youtube-badge-overlay">
+                  <svg viewBox="0 0 24 24" className="youtube-svg-icon" fill="currentColor">
+                    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.518 3.5 12 3.5 12 3.5s-7.518 0-9.388.555A3.003 3.003 0 0 0 .502 6.163C0 8.04 0 12 0 12s0 3.96.502 5.837a3.003 3.003 0 0 0 2.11 2.108C4.482 20.5 12 20.5 12 20.5s7.518 0 9.388-.555a3.003 3.003 0 0 0 2.11-2.108C24 15.96 24 12 24 12s0-3.96-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </div>
       </section>
@@ -522,8 +589,10 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="footer">
         <div className="footer-container">
-          <div className="footer-content">
-            <div className="footer-brand">
+          
+          {/* Top Section */}
+          <div className="footer-top">
+            <div className="footer-brand-col">
               <div className="footer-logo">
                 <div className="logo-dots small">
                   <span className="logo-dot blue"></span>
@@ -531,30 +600,93 @@ const LandingPage = () => {
                   <span className="logo-dot"></span>
                   <span className="logo-dot"></span>
                 </div>
-                <span>TodoApps</span>
+                <span className="footer-brand-name">TodoApps</span>
               </div>
-              <p>Your personal task management system for a calmer, more productive life.</p>
+              <h3 className="footer-tagline">Stay organized and boost your productivity</h3>
             </div>
-            <div className="footer-links-col">
-              <h4>Product</h4>
-              <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#benefits">Solutions</a></li>
-                <li><a href="#features">Pricing</a></li>
-              </ul>
-            </div>
-            <div className="footer-links-col">
-              <h4>Company</h4>
-              <ul>
-                <li><a href="#benefits">About Us</a></li>
-                <li><a href="#benefits">Careers</a></li>
-                <li><a href="#benefits">Privacy Policy</a></li>
-              </ul>
+            
+            <div className="footer-links-wrapper">
+              <div className="footer-links-col">
+                <a href="#benefits">→ About Us</a>
+                <a href="#benefits">→ Contact</a>
+                <a href="#features">→ What's New</a>
+                <a href="#benefits">→ Careers</a>
+              </div>
+              <div className="footer-links-col">
+                <a href="#features">→ Product</a>
+                <a href="#features">→ Solutions</a>
+                <a href="#features">→ Integrations</a>
+                <a href="#features">→ Price</a>
+              </div>
             </div>
           </div>
+
+          {/* Floating Widgets Canvas Section */}
+          <div className="footer-widgets-canvas">
+            
+            {/* Widget 1: Speech Bubble */}
+            <div className="footer-mini-widget widget-bubble">
+              <span className="mini-widget-dots">...</span>
+            </div>
+
+            {/* Widget 2: Checkbox */}
+            <div className="footer-mini-widget widget-checkbox-blue">
+              <span className="mini-widget-check-mark">✓</span>
+            </div>
+
+            {/* Widget 3: Calendar 20 */}
+            <div className="footer-mini-widget widget-calendar-20">
+              <span className="mini-widget-cal-header"></span>
+              <span className="mini-widget-cal-date">20</span>
+            </div>
+
+            {/* Widget 4: Clock */}
+            <div className="footer-mini-widget widget-clock-black">
+              <Clock size={20} color="#ffffff" />
+            </div>
+
+            {/* Widget 5: Flag */}
+            <div className="footer-mini-widget widget-flag-blue">
+              <span className="mini-widget-flag">⚑</span>
+            </div>
+
+            {/* Widget 6: Hourglass */}
+            <div className="footer-mini-widget widget-hourglass-blue">
+              <span className="mini-widget-glass">⏳</span>
+            </div>
+
+            {/* Widget 7: Calendar grid */}
+            <div className="footer-mini-widget widget-calendar-grid">
+              <Calendar size={20} color="#94a3b8" />
+            </div>
+
+            {/* Widget 8: Stopwatch */}
+            <div className="footer-mini-widget widget-stopwatch">
+              <span className="mini-widget-timer">⏱</span>
+            </div>
+
+            {/* Widget 9: Bulb */}
+            <div className="footer-mini-widget widget-bulb-orange">
+              <span className="mini-widget-bulb">💡</span>
+            </div>
+
+            {/* Widget 10: Double Chevron Right */}
+            <div className="footer-mini-widget widget-chevron-double">
+              <ChevronRight size={18} color="#0066ff" />
+              <ChevronRight size={18} color="#0066ff" style={{ marginLeft: '-10px' }} />
+            </div>
+
+          </div>
+
+          {/* Bottom Section */}
           <div className="footer-bottom">
-            <p>&copy; 2026 TodoApps. Built for modern builders. All rights reserved.</p>
+            <p className="footer-copy">© 2026. All rights reserved.</p>
+            <div className="footer-legal-links">
+              <a href="#benefits">Privacy Policy</a>
+              <a href="#benefits">Terms of Service</a>
+            </div>
           </div>
+
         </div>
       </footer>
     </div>
