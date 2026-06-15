@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react";
+﻿import React, {useCallback, useEffect, useState} from "react";
 import { 
   CheckSquare, 
   Calendar as LucideCalendar, 
@@ -439,87 +439,122 @@ export const TodoWrapper = () => {
                         ))}
                     </div>
                 ) : (
-                    // Calendar View Panel
+                    // Calendar View — Split Layout
                     <div className="db-calendar-view">
                         <h2 className="db-view-heading">Schedule Calendar</h2>
-                        
-                        <div className="db-calendar-container">
-                            <div className="db-calendar-header">
-                                <span className="db-calendar-title">
-                                    {currentMonth.toLocaleString("default", { month: "long", year: "numeric" })}
-                                </span>
-                                <div className="db-calendar-nav">
-                                    <button className="db-calendar-nav-btn" onClick={handlePrevMonth}>
-                                        <ChevronLeft size={16} />
-                                    </button>
-                                    <button className="db-calendar-nav-btn" onClick={handleNextMonth}>
-                                        <ChevronRight size={16} />
-                                    </button>
+
+                        <div className="db-cal-split">
+                            {/* Left: Calendar Grid */}
+                            <div className="db-calendar-container db-cal-left">
+                                <div className="db-calendar-header">
+                                    <span className="db-calendar-title">
+                                        {currentMonth.toLocaleString("default", { month: "long", year: "numeric" })}
+                                    </span>
+                                    <div className="db-calendar-nav">
+                                        <button className="db-calendar-nav-btn" onClick={handlePrevMonth}>
+                                            <ChevronLeft size={14} />
+                                        </button>
+                                        <button className="db-calendar-nav-btn" onClick={handleNextMonth}>
+                                            <ChevronRight size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="db-calendar-weekdays">
+                                    <span>Sun</span><span>Mon</span><span>Tue</span>
+                                    <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                                </div>
+
+                                <div className="db-calendar-grid">
+                                    {getDaysInMonth(currentMonth).map((day, idx) => {
+                                        const dateTasks = getTasksForDate(day.date);
+                                        const isSelected = day.date.toDateString() === selectedCalendarDate.toDateString();
+                                        const isToday = day.date.toDateString() === new Date().toDateString();
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`db-calendar-day-cell ${!day.isCurrentMonth ? "other-month" : ""} ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
+                                                onClick={() => setSelectedCalendarDate(day.date)}
+                                            >
+                                                <span className="db-cal-day-num">{day.day}</span>
+                                                {dateTasks.length > 0 && (
+                                                    <span className="db-cal-task-badge">{dateTasks.length}</span>
+                                                )}
+                                                {dateTasks.length > 0 && (
+                                                    <div className="db-calendar-dot-container">
+                                                        {dateTasks.slice(0, 3).map((task, i) => {
+                                                            const match = (task.task || "").match(/#(work|personal|shopping|fitness)/i);
+                                                            const cat = match ? match[1].toLowerCase() : "personal";
+                                                            return <span key={i} className={`db-calendar-dot bg-${cat}`}></span>;
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Legend */}
+                                <div className="db-cal-legend">
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#f97316'}}></span>Personal</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#3b82f6'}}></span>Work</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#8b5cf6'}}></span>Shopping</span>
+                                    <span className="db-cal-legend-item"><span className="db-cal-legend-dot" style={{background:'#10b981'}}></span>Fitness</span>
                                 </div>
                             </div>
-                            
-                            <div className="db-calendar-weekdays">
-                                <span>Sun</span>
-                                <span>Mon</span>
-                                <span>Tue</span>
-                                <span>Wed</span>
-                                <span>Thu</span>
-                                <span>Fri</span>
-                                <span>Sat</span>
-                            </div>
-                            
-                            <div className="db-calendar-grid">
-                                {getDaysInMonth(currentMonth).map((day, idx) => {
-                                    const dateTasks = getTasksForDate(day.date);
-                                    const isSelected = day.date.toDateString() === selectedCalendarDate.toDateString();
-                                    const isToday = day.date.toDateString() === new Date().toDateString();
-                                    
-                                    return (
-                                        <div 
-                                            key={idx}
-                                            className={`db-calendar-day-cell ${!day.isCurrentMonth ? "other-month" : ""} ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
-                                            onClick={() => setSelectedCalendarDate(day.date)}
-                                        >
-                                            <span>{day.day}</span>
-                                            {dateTasks.length > 0 && (
-                                                <div className="db-calendar-dot-container">
-                                                    {dateTasks.slice(0, 3).map((task, idx) => {
-                                                        const match = (task.task || "").match(/#(work|personal|shopping|fitness)/i);
-                                                        const cat = match ? match[1].toLowerCase() : "personal";
-                                                        return <span key={idx} className={`db-calendar-dot bg-${cat}`}></span>;
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
-                        {/* Tasks for selected calendar day list */}
-                        <div className="db-calendar-selected-date-section">
-                            <h3 className="db-calendar-selected-date-title">
-                                Focus Items for {selectedCalendarDate.toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' })}
-                            </h3>
-                            
-                            {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '16px' }}>{actionError}</div>}
-                            {filteredTodos.length === 0 ? (
-                                <p className="todo-empty">No tasks created on this date.</p>
-                            ) : (
-                                filteredTodos.map((todo) => (
-                                    todo.isEditing ? (
-                                        <EditTodoForm key={todo.id} editTodo={editTask} task={todo} />
+                            {/* Right: Task Panel */}
+                            <div className="db-cal-task-panel">
+                                <div className="db-cal-task-panel-header">
+                                    <div className="db-cal-task-panel-date">
+                                        <span className="db-cal-task-panel-daynum">
+                                            {selectedCalendarDate.getDate()}
+                                        </span>
+                                        <div className="db-cal-task-panel-dayinfo">
+                                            <span className="db-cal-task-panel-dayname">
+                                                {selectedCalendarDate.toLocaleDateString("en-US", { weekday: "long" })}
+                                            </span>
+                                            <span className="db-cal-task-panel-monthyear">
+                                                {selectedCalendarDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className="db-cal-task-count-chip">
+                                        {filteredTodos.length} task{filteredTodos.length !== 1 ? "s" : ""}
+                                    </span>
+                                </div>
+
+                                <div className="db-cal-task-list">
+                                    {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '12px' }}>{actionError}</div>}
+                                    {filteredTodos.length === 0 ? (
+                                        <div className="db-cal-empty-state">
+                                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                                <line x1="3" y1="10" x2="21" y2="10"/>
+                                            </svg>
+                                            <p>No tasks on this day</p>
+                                            <span>Tasks created on this date will appear here</span>
+                                        </div>
                                     ) : (
-                                        <Todo 
-                                            task={todo} 
-                                            key={todo.id} 
-                                            toggleComplete={toggleComplete}
-                                            deleteTodo={deleteTodo}
-                                            editTodo={editTodo}
-                                        />
-                                    )
-                                ))
-                            )}
+                                        filteredTodos.map((todo) => (
+                                            todo.isEditing ? (
+                                                <EditTodoForm key={todo.id} editTodo={editTask} task={todo} />
+                                            ) : (
+                                                <Todo
+                                                    task={todo}
+                                                    key={todo.id}
+                                                    toggleComplete={toggleComplete}
+                                                    deleteTodo={deleteTodo}
+                                                    editTodo={editTodo}
+                                                />
+                                            )
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
