@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { Calendar, ChevronDown, ChevronUp, X } from "lucide-react";
 
 // ── Inline SVG icons ──────────────────────────────────────────────
 const IconCircle = () => (
@@ -30,6 +31,19 @@ const IconTrash = () => (
     </svg>
 );
 
+const IconMiniCircle = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8" />
+    </svg>
+);
+
+const IconMiniCheck = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="8" />
+        <polyline points="9 12 11 14 15 10" />
+    </svg>
+);
+
 // ── Category config ────────────────────────────────────────────────
 const CAT_CONFIG = {
     work:     { color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  label: "Work" },
@@ -38,21 +52,47 @@ const CAT_CONFIG = {
     fitness:  { color: "#10b981", bg: "rgba(16,185,129,0.1)",  label: "Fitness" },
 };
 
-const extractCategory = (title = "") => {
-    const match = title.match(/#(work|personal|shopping|fitness)/i);
-    if (match) {
-        return {
-            cleanTitle: title.replace(match[0], "").trim(),
-            category: match[1].toLowerCase(),
-        };
-    }
-    return { cleanTitle: title, category: null };
+// Clean legacy hashtag from displayed title
+const cleanLegacyTitle = (title = "") => {
+    return title.replace(/\s*#(work|personal|shopping|fitness)/i, "").trim();
+};
+
+// Due date status helper
+const getDueDateStatus = (dueDateStr) => {
+    if (!dueDateStr) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(dueDateStr + "T00:00:00");
+
+    const diffMs = dueDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { status: "overdue", label: "Overdue", className: "todo-due-badge--overdue" };
+    if (diffDays === 0) return { status: "today", label: "Today", className: "todo-due-badge--today" };
+    if (diffDays === 1) return { status: "tomorrow", label: "Tomorrow", className: "todo-due-badge--upcoming" };
+    return { status: "future", label: null, className: "todo-due-badge--future" };
+};
+
+const formatDueDate = (dueDateStr) => {
+    if (!dueDateStr) return "";
+    const date = new Date(dueDateStr + "T00:00:00");
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
 // ── Component ──────────────────────────────────────────────────────
-export const Todo = ({ task, toggleComplete, deleteTodo, editTodo }) => {
-    const { cleanTitle, category } = extractCategory(task.task);
-    const cat = category ? CAT_CONFIG[category] : null;
+export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask, deleteSubTask }) => {
+    const [showSubTasks, setShowSubTasks] = useState(false);
+
+    const cleanTitle = cleanLegacyTitle(task.task);
+    const category = task.category || "personal";
+    const cat = CAT_CONFIG[category] || null;
+    const dueStatus = getDueDateStatus(task.dueDate);
+    const formattedDue = formatDueDate(task.dueDate);
+
+    const subTasks = task.subTasks || [];
+    const completedSubTasks = subTasks.filter(st => st.completed).length;
+    const hasSubTasks = subTasks.length > 0;
 
     const createdTime = task.createdAt
         ? new Date(task.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
@@ -60,53 +100,104 @@ export const Todo = ({ task, toggleComplete, deleteTodo, editTodo }) => {
 
     return (
         <div className={`todo-card${task.completed ? " todo-card--done" : ""}`}>
-            {/* Left: checkbox toggle */}
-            <button
-                className={`todo-check-btn${task.completed ? " todo-check-btn--done" : ""}`}
-                onClick={() => toggleComplete(task.id)}
-                aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
-                style={task.completed ? { color: "#10b981" } : {}}
-            >
-                {task.completed ? <IconCheckCircle /> : <IconCircle />}
-            </button>
+            <div className="todo-card-main">
+                {/* Left: checkbox toggle */}
+                <button
+                    className={`todo-check-btn${task.completed ? " todo-check-btn--done" : ""}`}
+                    onClick={() => toggleComplete(task.id)}
+                    aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+                    style={task.completed ? { color: "#10b981" } : {}}
+                >
+                    {task.completed ? <IconCheckCircle /> : <IconCircle />}
+                </button>
 
-            {/* Middle: content */}
-            <div className="todo-body">
-                <span className={`todo-title${task.completed ? " todo-title--done" : ""}`}>
-                    {cleanTitle}
-                </span>
-                <div className="todo-meta-row">
-                    {createdTime && (
-                        <span className="todo-time">{createdTime}</span>
-                    )}
-                    {cat && (
-                        <span
-                            className="todo-cat-chip"
-                            style={{ color: cat.color, backgroundColor: cat.bg }}
-                        >
-                            {cat.label}
-                        </span>
-                    )}
+                {/* Middle: content */}
+                <div className="todo-body">
+                    <span className={`todo-title${task.completed ? " todo-title--done" : ""}`}>
+                        {cleanTitle}
+                    </span>
+                    <div className="todo-meta-row">
+                        {createdTime && (
+                            <span className="todo-time">{createdTime}</span>
+                        )}
+                        {cat && (
+                            <span
+                                className="todo-cat-chip"
+                                style={{ color: cat.color, backgroundColor: cat.bg }}
+                            >
+                                {cat.label}
+                            </span>
+                        )}
+                        {task.dueDate && (
+                            <span className={`todo-due-badge ${dueStatus?.className || ""}`}>
+                                <Calendar size={11} />
+                                <span>{dueStatus?.label || formattedDue}</span>
+                                {dueStatus?.status === "future" && <span>{formattedDue}</span>}
+                            </span>
+                        )}
+                        {hasSubTasks && (
+                            <button
+                                className="todo-subtask-toggle"
+                                onClick={() => setShowSubTasks(!showSubTasks)}
+                                aria-label={showSubTasks ? "Hide sub-tasks" : "Show sub-tasks"}
+                            >
+                                <span className="todo-subtask-progress">
+                                    {completedSubTasks}/{subTasks.length}
+                                </span>
+                                {showSubTasks ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Right: actions */}
+                <div className="todo-action-group">
+                    <button
+                        className="todo-icon-btn todo-icon-btn--edit"
+                        onClick={() => editTodo(task.id)}
+                        aria-label="Edit task"
+                    >
+                        <IconEdit />
+                    </button>
+                    <button
+                        className="todo-icon-btn todo-icon-btn--delete"
+                        onClick={() => deleteTodo(task.id)}
+                        aria-label="Delete task"
+                    >
+                        <IconTrash />
+                    </button>
                 </div>
             </div>
 
-            {/* Right: actions */}
-            <div className="todo-action-group">
-                <button
-                    className="todo-icon-btn todo-icon-btn--edit"
-                    onClick={() => editTodo(task.id)}
-                    aria-label="Edit task"
-                >
-                    <IconEdit />
-                </button>
-                <button
-                    className="todo-icon-btn todo-icon-btn--delete"
-                    onClick={() => deleteTodo(task.id)}
-                    aria-label="Delete task"
-                >
-                    <IconTrash />
-                </button>
-            </div>
+            {/* Sub-tasks expandable section */}
+            {hasSubTasks && showSubTasks && (
+                <div className="todo-subtask-section">
+                    {subTasks.map((st) => (
+                        <div
+                            key={st.id}
+                            className={`todo-subtask-row ${st.completed ? "todo-subtask-row--done" : ""}`}
+                        >
+                            <button
+                                className={`todo-subtask-check ${st.completed ? "todo-subtask-check--done" : ""}`}
+                                onClick={() => toggleSubTask(task.id, st.id)}
+                                aria-label={st.completed ? "Mark sub-task incomplete" : "Mark sub-task complete"}
+                            >
+                                {st.completed ? <IconMiniCheck /> : <IconMiniCircle />}
+                            </button>
+                            <span className={`todo-subtask-title ${st.completed ? "todo-subtask-title--done" : ""}`}>
+                                {st.title}
+                            </span>
+                            <button
+                                className="todo-subtask-delete"
+                                onClick={() => deleteSubTask(task.id, st.id)}
+                                aria-label="Delete sub-task"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

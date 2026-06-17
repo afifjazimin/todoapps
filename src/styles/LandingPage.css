@@ -3242,30 +3242,7 @@
   }
 }
 
-/* ==========================================
-   Redesigned Todo Card — Minimalist
-   ========================================== */
-.todo-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background-color: #ffffff;
-  border: 1px solid #e8edf2;
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 8px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.todo-card:hover {
-  border-color: #d1d9e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.todo-card--done {
-  background-color: #fafafa;
-  border-color: #f0f0f0;
-}
+/* Todo Card styles moved to Enhanced section below */
 
 /* Checkbox button */
 .todo-check-btn {
@@ -3386,4 +3363,521 @@
 .todo-icon-btn--delete:hover {
   color: #ef4444;
   background-color: rgba(239, 68, 68, 0.07);
+}
+
+/* ==========================================
+   Enhanced Add Task Form Styles
+   ========================================== */
+
+/* Form card enhanced variant */
+.db-form-card--enhanced {
+  padding: 20px 24px 16px;
+}
+
+/* Meta row: due date + category in one row */
+.db-form-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.db-form-meta-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* Due date picker group */
+.db-form-date-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.db-form-date-group:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+  background-color: #ffffff;
+}
+
+.db-form-date-icon {
+  color: var(--color-gray-light);
+  flex-shrink: 0;
+}
+
+.db-form-date-input {
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-dark);
+  outline: none;
+  cursor: pointer;
+  min-width: 110px;
+  padding: 0;
+}
+
+.db-form-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.db-form-date-clear {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-light);
+  border-radius: 4px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.db-form-date-clear:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+/* ==========================================
+   Sub-task Section (Form)
+   ========================================== */
+.db-form-subtask-section {
+  margin-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+}
+
+.db-form-subtask-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-gray-medium);
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  width: 100%;
+}
+
+.db-form-subtask-toggle:hover {
+  color: var(--color-dark);
+  background-color: #f8fafc;
+}
+
+.db-form-subtask-toggle.active {
+  color: var(--color-primary);
+}
+
+.db-form-subtask-body {
+  padding: 8px 0 4px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sub-task mini input */
+.db-form-subtask-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.db-form-subtask-input {
+  flex: 1;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  padding: 0 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-dark);
+  outline: none;
+  background-color: #f8fafc;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.db-form-subtask-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.08);
+  background-color: #ffffff;
+}
+
+.db-form-subtask-input::placeholder {
+  color: var(--color-gray-light);
+  font-weight: 400;
+}
+
+.db-form-subtask-add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: var(--color-gray-medium);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.db-form-subtask-add-btn:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.db-form-subtask-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Sub-task items in form */
+.db-form-subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-form-subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  animation: slideDown 0.15s ease;
+}
+
+.db-form-subtask-bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.db-form-subtask-text {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-dark);
+  min-width: 0;
+  word-break: break-word;
+}
+
+.db-form-subtask-remove {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-light);
+  border-radius: 4px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.db-form-subtask-remove:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+/* ==========================================
+   Todo Card — Enhanced with sub-tasks
+   ========================================== */
+.todo-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border: 1px solid #e8edf2;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.todo-card:hover {
+  border-color: #d1d9e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.todo-card--done {
+  background-color: #fafafa;
+  border-color: #f0f0f0;
+}
+
+.todo-card-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+/* ==========================================
+   Due Date Badges
+   ========================================== */
+.todo-due-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.todo-due-badge--overdue {
+  color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.08);
+}
+
+.todo-due-badge--today {
+  color: #ea580c;
+  background-color: rgba(234, 88, 12, 0.08);
+}
+
+.todo-due-badge--upcoming {
+  color: #d97706;
+  background-color: rgba(217, 119, 6, 0.08);
+}
+
+.todo-due-badge--future {
+  color: #64748b;
+  background-color: rgba(100, 116, 139, 0.08);
+}
+
+/* ==========================================
+   Sub-task toggle button in meta row
+   ========================================== */
+.todo-subtask-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-gray-medium);
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.todo-subtask-toggle:hover {
+  color: var(--color-primary);
+  background-color: rgba(0, 102, 255, 0.06);
+}
+
+.todo-subtask-progress {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================
+   Sub-task Section (Todo display)
+   ========================================== */
+.todo-subtask-section {
+  border-top: 1px solid #f1f5f9;
+  padding: 10px 16px 12px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: slideDown 0.2s ease;
+}
+
+.todo-subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-radius: 4px;
+}
+
+.todo-subtask-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d1d5db;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.todo-subtask-check:hover {
+  color: var(--color-primary);
+  background-color: rgba(0, 102, 255, 0.06);
+}
+
+.todo-subtask-check--done {
+  color: #10b981;
+}
+
+.todo-subtask-check--done:hover {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.06);
+}
+
+.todo-subtask-title {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-dark);
+  line-height: 1.4;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.todo-subtask-title--done {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.todo-subtask-delete {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  border-radius: 4px;
+  padding: 0;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.todo-subtask-row:hover .todo-subtask-delete {
+  opacity: 1;
+}
+
+.todo-subtask-delete:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+/* ==========================================
+   Enhanced Edit Form
+   ========================================== */
+.db-edit-form-enhanced {
+  margin-bottom: 8px;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.08);
+}
+
+.db-edit-form-enhanced .db-form-row {
+  margin-bottom: 10px;
+}
+
+/* Calendar dot colors for new category field */
+.db-calendar-dot.bg-personal { background-color: #f97316; }
+.db-calendar-dot.bg-work { background-color: #3b82f6; }
+.db-calendar-dot.bg-shopping { background-color: #8b5cf6; }
+.db-calendar-dot.bg-fitness { background-color: #10b981; }
+
+/* ==========================================
+   Responsive — Enhanced Form
+   ========================================== */
+@media (max-width: 768px) {
+  .db-form-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .db-form-meta-divider {
+    display: none;
+  }
+
+  .db-form-date-group {
+    width: 100%;
+  }
+
+  .db-form-date-input {
+    flex: 1;
+  }
+
+  .db-tag-select-container {
+    width: 100%;
+  }
+
+  .todo-subtask-section {
+    padding-left: 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .db-form-card--enhanced {
+    padding: 16px;
+  }
+
+  .db-form-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .db-form-btn-submit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .todo-subtask-delete {
+    opacity: 1;
+  }
+
+  .todo-action-group {
+    opacity: 1;
+  }
 }

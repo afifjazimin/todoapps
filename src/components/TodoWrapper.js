@@ -14,13 +14,26 @@ import { EditTodoForm } from "./EditTodoForm.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../supabaseClient.js";
 
-const mapSupabaseTodo = todo => ({
+const mapSupabaseTodo = (todo, subTasks = []) => ({
     id: todo.id,
     task: todo.title,
     completed: todo.is_completed,
     isEditing: false,
-    createdAt: todo.created_at
+    createdAt: todo.created_at,
+    category: todo.category || extractLegacyCategory(todo.title),
+    dueDate: todo.due_date || null,
+    subTasks: subTasks.map(st => ({
+        id: st.id,
+        title: st.title,
+        completed: st.is_completed,
+    })),
 });
+
+// Backwards compatibility: extract category from old hashtag-in-title format
+const extractLegacyCategory = (title = "") => {
+    const match = title.match(/#(work|personal|shopping|fitness)/i);
+    return match ? match[1].toLowerCase() : "personal";
+};
 
 export const TodoWrapper = () => {
     const { user, authReady } = useAuth();
@@ -55,34 +68,64 @@ export const TodoWrapper = () => {
         setLoadingTodos(true);
         setActionError("");
 
-        const { data, error } = await supabase
+        // Fetch todos with new columns
+        const { data: todosData, error: todosError } = await supabase
             .from("todos")
-            .select("id,title,is_completed,created_at")
+            .select("id,title,is_completed,created_at,category,due_date")
             .order("created_at", { ascending: false });
 
-        setLoadingTodos(false);
-
-        if (error) {
-            setActionError(error.message);
+        if (todosError) {
+            setLoadingTodos(false);
+            setActionError(todosError.message);
             return;
         }
 
-        setTodos((data ?? []).map(mapSupabaseTodo));
+        // Fetch all sub_tasks for this user
+        const todoIds = (todosData ?? []).map(t => t.id);
+        let subTasksMap = {};
+
+        if (todoIds.length > 0) {
+            const { data: subTasksData, error: subTasksError } = await supabase
+                .from("sub_tasks")
+                .select("id,todo_id,title,is_completed")
+                .in("todo_id", todoIds)
+                .order("created_at", { ascending: true });
+
+            if (!subTasksError && subTasksData) {
+                subTasksData.forEach(st => {
+                    if (!subTasksMap[st.todo_id]) subTasksMap[st.todo_id] = [];
+                    subTasksMap[st.todo_id].push(st);
+                });
+            }
+        }
+
+        setTodos((todosData ?? []).map(todo => mapSupabaseTodo(todo, subTasksMap[todo.id] || [])));
+        setLoadingTodos(false);
     }, [user]);
 
     useEffect(() => {
         fetchTodos();
     }, [fetchTodos]);
 
-    const addTodo = async todo => {
+    const addTodo = async ({ task, dueDate, category, subTasks }) => {
         if (!user || !supabase) return false;
 
         setActionError("");
 
+        // Insert the main todo
+        const insertData = {
+            title: task,
+            user_id: user.id,
+            category: category || "personal",
+        };
+        if (dueDate) {
+            insertData.due_date = dueDate;
+        }
+
         const { data, error } = await supabase
             .from("todos")
-            .insert([{ title: todo, user_id: user.id }])
-            .select("id,title,is_completed,created_at")
+            .insert([insertData])
+            .select("id,title,is_completed,created_at,category,due_date")
             .single();
 
         if (error) {
@@ -90,7 +133,29 @@ export const TodoWrapper = () => {
             return false;
         }
 
-        setTodos(currentTodos => [mapSupabaseTodo(data), ...currentTodos]);
+        // Insert sub-tasks if any
+        let insertedSubTasks = [];
+        if (subTasks && subTasks.length > 0) {
+            const subTaskRows = subTasks.map(st => ({
+                todo_id: data.id,
+                title: st,
+                user_id: user.id,
+            }));
+
+            const { data: stData, error: stError } = await supabase
+                .from("sub_tasks")
+                .insert(subTaskRows)
+                .select("id,todo_id,title,is_completed");
+
+            if (stError) {
+                // Main todo was created but sub-tasks failed — still show it
+                console.error("Sub-task insert error:", stError.message);
+            } else {
+                insertedSubTasks = stData || [];
+            }
+        }
+
+        setTodos(currentTodos => [mapSupabaseTodo(data, insertedSubTasks), ...currentTodos]);
         return true;
     };
 
@@ -132,14 +197,18 @@ export const TodoWrapper = () => {
         setTodos(todos.map(todo => todo.id === id ? { ...todo, isEditing: !todo.isEditing } : todo));
     };
 
-    const editTask = async (task, id) => {
+    const editTask = async ({ task, dueDate, category }, id) => {
         if (!supabase) return false;
 
         setActionError("");
 
+        const updateData = { title: task };
+        if (category) updateData.category = category;
+        if (dueDate !== undefined) updateData.due_date = dueDate || null;
+
         const { error } = await supabase
             .from("todos")
-            .update({ title: task })
+            .update(updateData)
             .eq("id", id);
 
         if (error) {
@@ -147,8 +216,70 @@ export const TodoWrapper = () => {
             return false;
         }
 
-        setTodos(todos.map(todo => todo.id === id ? { ...todo, task, isEditing: !todo.isEditing } : todo));
+        setTodos(todos.map(todo => todo.id === id ? {
+            ...todo,
+            task,
+            category: category || todo.category,
+            dueDate: dueDate !== undefined ? (dueDate || null) : todo.dueDate,
+            isEditing: false,
+        } : todo));
         return true;
+    };
+
+    const toggleSubTask = async (todoId, subTaskId) => {
+        if (!supabase) return;
+
+        const todo = todos.find(t => t.id === todoId);
+        if (!todo) return;
+
+        const subTask = todo.subTasks.find(st => st.id === subTaskId);
+        if (!subTask) return;
+
+        setActionError("");
+
+        const { error } = await supabase
+            .from("sub_tasks")
+            .update({ is_completed: !subTask.completed })
+            .eq("id", subTaskId);
+
+        if (error) {
+            setActionError(error.message);
+            return;
+        }
+
+        setTodos(todos.map(t => {
+            if (t.id !== todoId) return t;
+            return {
+                ...t,
+                subTasks: t.subTasks.map(st =>
+                    st.id === subTaskId ? { ...st, completed: !st.completed } : st
+                ),
+            };
+        }));
+    };
+
+    const deleteSubTask = async (todoId, subTaskId) => {
+        if (!supabase) return;
+
+        setActionError("");
+
+        const { error } = await supabase
+            .from("sub_tasks")
+            .delete()
+            .eq("id", subTaskId);
+
+        if (error) {
+            setActionError(error.message);
+            return;
+        }
+
+        setTodos(todos.map(t => {
+            if (t.id !== todoId) return t;
+            return {
+                ...t,
+                subTasks: t.subTasks.filter(st => st.id !== subTaskId),
+            };
+        }));
     };
 
     const handleLogout = async () => {
@@ -156,17 +287,10 @@ export const TodoWrapper = () => {
         await supabase.auth.signOut();
     };
 
-    // Category Counts calculation helper
+    // Category Counts — now uses the dedicated category field
     const getCategoryCount = (cat) => {
         if (cat === "all") return todos.length;
-        return todos.filter(t => {
-            const taskLower = (t.task || "").toLowerCase();
-            const hasTag = taskLower.includes("#work") || taskLower.includes("#personal") || taskLower.includes("#shopping") || taskLower.includes("#fitness");
-            if (cat === "personal") {
-                return taskLower.includes("#personal") || !hasTag;
-            }
-            return taskLower.includes(`#${cat}`);
-        }).length;
+        return todos.filter(t => (t.category || "personal") === cat).length;
     };
 
     // Progress percentage calculation
@@ -177,16 +301,14 @@ export const TodoWrapper = () => {
     const filteredTodos = todos.filter(todo => {
         if (activeTab === "home") {
             if (activeCategory === "all") return true;
-            const taskLower = (todo.task || "").toLowerCase();
-            if (activeCategory === "personal") {
-                const hasTag = taskLower.includes("#work") || taskLower.includes("#personal") || taskLower.includes("#shopping") || taskLower.includes("#fitness");
-                return taskLower.includes("#personal") || !hasTag;
-            }
-            return taskLower.includes(`#${activeCategory}`);
+            return (todo.category || "personal") === activeCategory;
         } else {
-            // Calendar Mode: filter tasks created on the selected date
-            if (!todo.createdAt) return false;
-            return new Date(todo.createdAt).toDateString() === selectedCalendarDate.toDateString();
+            // Calendar Mode: filter by due_date first, then created_at fallback
+            const dateToCheck = todo.dueDate
+                ? new Date(todo.dueDate + "T00:00:00")
+                : (todo.createdAt ? new Date(todo.createdAt) : null);
+            if (!dateToCheck) return false;
+            return dateToCheck.toDateString() === selectedCalendarDate.toDateString();
         }
     });
 
@@ -236,8 +358,11 @@ export const TodoWrapper = () => {
     const getTasksForDate = (date) => {
         const dStr = date.toDateString();
         return todos.filter(t => {
-            if (!t.createdAt) return false;
-            return new Date(t.createdAt).toDateString() === dStr;
+            const dateToCheck = t.dueDate
+                ? new Date(t.dueDate + "T00:00:00")
+                : (t.createdAt ? new Date(t.createdAt) : null);
+            if (!dateToCheck) return false;
+            return dateToCheck.toDateString() === dStr;
         });
     };
 
@@ -291,7 +416,7 @@ export const TodoWrapper = () => {
                         <span className="logo-dot"></span>
                         <span className="logo-dot"></span>
                     </div>
-                    <span className="db-sidebar-brand">TodoApps</span>
+                    <span className="db-sidebar-brand">Toodu</span>
                 </div>
 
                 {/* Navigation Group */}
@@ -433,6 +558,8 @@ export const TodoWrapper = () => {
                                     toggleComplete={toggleComplete}
                                     deleteTodo={deleteTodo}
                                     editTodo={editTodo}
+                                    toggleSubTask={toggleSubTask}
+                                    deleteSubTask={deleteSubTask}
                                 />
                             )
                         ))}
@@ -483,8 +610,7 @@ export const TodoWrapper = () => {
                                                 {dateTasks.length > 0 && (
                                                     <div className="db-calendar-dot-container">
                                                         {dateTasks.slice(0, 3).map((task, i) => {
-                                                            const match = (task.task || "").match(/#(work|personal|shopping|fitness)/i);
-                                                            const cat = match ? match[1].toLowerCase() : "personal";
+                                                            const cat = task.category || "personal";
                                                             return <span key={i} className={`db-calendar-dot bg-${cat}`}></span>;
                                                         })}
                                                     </div>
@@ -535,7 +661,7 @@ export const TodoWrapper = () => {
                                                 <line x1="3" y1="10" x2="21" y2="10" />
                                             </svg>
                                             <p>No tasks on this day</p>
-                                            <span>Tasks created on this date will appear here</span>
+                                            <span>Tasks with this due date will appear here</span>
                                         </div>
                                     ) : (
                                         filteredTodos.map((todo) => (
@@ -548,6 +674,8 @@ export const TodoWrapper = () => {
                                                     toggleComplete={toggleComplete}
                                                     deleteTodo={deleteTodo}
                                                     editTodo={editTodo}
+                                                    toggleSubTask={toggleSubTask}
+                                                    deleteSubTask={deleteSubTask}
                                                 />
                                             )
                                         ))
