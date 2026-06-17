@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Plus, Calendar, ChevronDown, ChevronUp, X, ListPlus } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, X, ListPlus } from "lucide-react";
+import { DatePicker } from "./ui/DatePicker";
+import { CategorySelector } from "./ui/CategorySelector";
 
-export const TodoForm = ({ addTodo }) => {
+export const TodoForm = ({ categories = ["personal", "work", "shopping", "fitness"], addTodo }) => {
     const [taskName, setTaskName] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [category, setCategory] = useState("personal");
@@ -75,25 +77,7 @@ export const TodoForm = ({ addTodo }) => {
                 {/* Row 2: Due Date + Category tags */}
                 <div className="db-form-meta-row">
                     {/* Due Date Picker */}
-                    <div className="db-form-date-group">
-                        <Calendar size={14} className="db-form-date-icon" />
-                        <input
-                            type="date"
-                            value={dueDate}
-                            className="db-form-date-input"
-                            onChange={(e) => setDueDate(e.target.value)}
-                        />
-                        {dueDate && (
-                            <button
-                                type="button"
-                                className="db-form-date-clear"
-                                onClick={() => setDueDate("")}
-                                aria-label="Clear due date"
-                            >
-                                <X size={12} />
-                            </button>
-                        )}
-                    </div>
+                    <DatePicker value={dueDate} onChange={setDueDate} />
 
                     {/* Divider */}
                     <span className="db-form-meta-divider"></span>
@@ -101,36 +85,7 @@ export const TodoForm = ({ addTodo }) => {
                     {/* Category selector */}
                     <div className="db-tag-select-container">
                         <span className="db-tag-select-label">Category:</span>
-                        <div className="db-tag-options">
-                            <button
-                                type="button"
-                                className={`db-tag-btn tag-personal ${category === "personal" ? "active" : ""}`}
-                                onClick={() => setCategory("personal")}
-                            >
-                                Personal
-                            </button>
-                            <button
-                                type="button"
-                                className={`db-tag-btn tag-work ${category === "work" ? "active" : ""}`}
-                                onClick={() => setCategory("work")}
-                            >
-                                Work
-                            </button>
-                            <button
-                                type="button"
-                                className={`db-tag-btn tag-shopping ${category === "shopping" ? "active" : ""}`}
-                                onClick={() => setCategory("shopping")}
-                            >
-                                Shopping
-                            </button>
-                            <button
-                                type="button"
-                                className={`db-tag-btn tag-fitness ${category === "fitness" ? "active" : ""}`}
-                                onClick={() => setCategory("fitness")}
-                            >
-                                Fitness
-                            </button>
-                        </div>
+                        <CategorySelector value={category} onChange={setCategory} categories={categories} />
                     </div>
                 </div>
 

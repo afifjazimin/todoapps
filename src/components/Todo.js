@@ -44,6 +44,7 @@ const IconMiniCheck = () => (
     </svg>
 );
 
+
 // ── Category config ────────────────────────────────────────────────
 const CAT_CONFIG = {
     work:     { color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  label: "Work" },
@@ -86,7 +87,7 @@ export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask
 
     const cleanTitle = cleanLegacyTitle(task.task);
     const category = task.category || "personal";
-    const cat = CAT_CONFIG[category] || null;
+    const cat = CAT_CONFIG[category] || { color: "#64748b", bg: "rgba(148, 163, 184, 0.12)", label: category };
     const dueStatus = getDueDateStatus(task.dueDate);
     const formattedDue = formatDueDate(task.dueDate);
 
@@ -120,10 +121,15 @@ export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask
                         {createdTime && (
                             <span className="todo-time">{createdTime}</span>
                         )}
-                        {cat && (
+                        {category && (
                             <span
                                 className="todo-cat-chip"
-                                style={{ color: cat.color, backgroundColor: cat.bg }}
+                                style={{
+                                    color: cat.color,
+                                    backgroundColor: cat.bg,
+                                    textTransform: "capitalize",
+                                    border: !CAT_CONFIG[category] ? "1px solid rgba(148, 163, 184, 0.2)" : undefined
+                                }}
                             >
                                 {cat.label}
                             </span>

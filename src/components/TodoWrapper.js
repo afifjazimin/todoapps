@@ -290,8 +290,14 @@ export const TodoWrapper = () => {
     // Category Counts — now uses the dedicated category field
     const getCategoryCount = (cat) => {
         if (cat === "all") return todos.length;
-        return todos.filter(t => (t.category || "personal") === cat).length;
+        return todos.filter(t => (t.category || "personal").toLowerCase() === cat.toLowerCase()).length;
     };
+
+    const defaultCategories = ["personal", "work", "shopping", "fitness"];
+    const categoriesList = Array.from(new Set([
+        ...defaultCategories,
+        ...todos.map(t => (t.category || "personal").toLowerCase())
+    ])).filter(cat => cat !== "styling");
 
     // Progress percentage calculation
     const completedCount = todos.filter(t => t.completed).length;
@@ -301,7 +307,7 @@ export const TodoWrapper = () => {
     const filteredTodos = todos.filter(todo => {
         if (activeTab === "home") {
             if (activeCategory === "all") return true;
-            return (todo.category || "personal") === activeCategory;
+            return (todo.category || "personal").toLowerCase() === activeCategory.toLowerCase();
         } else {
             // Calendar Mode: filter by due_date first, then created_at fallback
             const dateToCheck = todo.dueDate
@@ -452,50 +458,30 @@ export const TodoWrapper = () => {
                         <span>All Focus Items</span>
                         <span className="cat-count">{getCategoryCount("all")}</span>
                     </button>
-                    <button
-                        className={`sidebar-item ${activeTab === "home" && activeCategory === "personal" ? "active" : ""}`}
-                        onClick={() => {
-                            setActiveTab("home");
-                            setActiveCategory("personal");
-                        }}
-                    >
-                        <span className="cat-dot bg-orange"></span>
-                        <span>Personal</span>
-                        <span className="cat-count">{getCategoryCount("personal")}</span>
-                    </button>
-                    <button
-                        className={`sidebar-item ${activeTab === "home" && activeCategory === "work" ? "active" : ""}`}
-                        onClick={() => {
-                            setActiveTab("home");
-                            setActiveCategory("work");
-                        }}
-                    >
-                        <span className="cat-dot bg-blue"></span>
-                        <span>Work</span>
-                        <span className="cat-count">{getCategoryCount("work")}</span>
-                    </button>
-                    <button
-                        className={`sidebar-item ${activeTab === "home" && activeCategory === "shopping" ? "active" : ""}`}
-                        onClick={() => {
-                            setActiveTab("home");
-                            setActiveCategory("shopping");
-                        }}
-                    >
-                        <span className="cat-dot bg-purple"></span>
-                        <span>Shopping</span>
-                        <span className="cat-count">{getCategoryCount("shopping")}</span>
-                    </button>
-                    <button
-                        className={`sidebar-item ${activeTab === "home" && activeCategory === "fitness" ? "active" : ""}`}
-                        onClick={() => {
-                            setActiveTab("home");
-                            setActiveCategory("fitness");
-                        }}
-                    >
-                        <span className="cat-dot bg-green"></span>
-                        <span>Fitness</span>
-                        <span className="cat-count">{getCategoryCount("fitness")}</span>
-                    </button>
+                    {categoriesList.map(cat => {
+                        const colorMap = {
+                            personal: "bg-orange",
+                            work: "bg-blue",
+                            shopping: "bg-purple",
+                            fitness: "bg-green"
+                        };
+                        const dotClass = colorMap[cat] || "bg-gray";
+                        const customDotStyle = !colorMap[cat] ? { background: '#94a3b8' } : undefined;
+                        return (
+                            <button
+                                key={cat}
+                                className={`sidebar-item ${activeTab === "home" && activeCategory === cat ? "active" : ""}`}
+                                onClick={() => {
+                                    setActiveTab("home");
+                                    setActiveCategory(cat);
+                                }}
+                            >
+                                <span className={`cat-dot ${dotClass}`} style={customDotStyle}></span>
+                                <span style={{ textTransform: 'capitalize' }}>{cat}</span>
+                                <span className="cat-count">{getCategoryCount(cat)}</span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Sidebar Bottom (Progress Bar & Logout) */}
@@ -540,7 +526,7 @@ export const TodoWrapper = () => {
                             {activeCategory === "all" ? "Today's Focus" : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Focus`}
                         </h2>
 
-                        <TodoForm addTodo={addTodo} />
+                        <TodoForm categories={categoriesList} addTodo={addTodo} />
 
                         {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '16px' }}>{actionError}</div>}
                         {loadingTodos && <p className="todo-empty">Loading your tasks...</p>}
@@ -550,7 +536,7 @@ export const TodoWrapper = () => {
 
                         {filteredTodos.map((todo) => (
                             todo.isEditing ? (
-                                <EditTodoForm key={todo.id} editTodo={editTask} task={todo} />
+                                <EditTodoForm key={todo.id} categories={categoriesList} editTodo={editTask} task={todo} />
                             ) : (
                                 <Todo
                                     task={todo}
@@ -666,7 +652,7 @@ export const TodoWrapper = () => {
                                     ) : (
                                         filteredTodos.map((todo) => (
                                             todo.isEditing ? (
-                                                <EditTodoForm key={todo.id} editTodo={editTask} task={todo} />
+                                                <EditTodoForm key={todo.id} categories={categoriesList} editTodo={editTask} task={todo} />
                                             ) : (
                                                 <Todo
                                                     task={todo}
