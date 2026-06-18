@@ -35,7 +35,7 @@ export const EditTodoForm = ({ categories = ["personal", "work", "shopping", "fi
     };
 
     return (
-        <div className="db-form-card db-edit-form-enhanced">
+        <div className="db-edit-form-enhanced">
             <form onSubmit={handleSubmit}>
                 {/* Task name + Submit */}
                 <div className="db-form-row">

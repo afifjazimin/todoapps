@@ -6,7 +6,9 @@ import {
     ListTodo,
     ChevronLeft,
     ChevronRight,
-    LayoutDashboard
+    LayoutDashboard,
+    Menu,
+    X
 } from "lucide-react";
 import { TodoForm } from "./TodoForm";
 import { Todo } from "./Todo.js";
@@ -42,11 +44,11 @@ export const TodoWrapper = () => {
     const [loadingTodos, setLoadingTodos] = useState(false);
     const [actionError, setActionError] = useState("");
 
-    // Active Nav States
     const [activeTab, setActiveTab] = useState("home"); // "home" or "calendar"
     const [activeCategory, setActiveCategory] = useState("all"); // "all", "work", "personal", "shopping", "fitness"
     const [selectedCalendarDate, setSelectedCalendarDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -414,7 +416,7 @@ export const TodoWrapper = () => {
             <div className="dot-grid-bg"></div>
 
             {/* Left Sidebar Panel */}
-            <aside className="db-sidebar">
+            <aside className={`db-sidebar ${isSidebarOpen ? "active" : ""}`}>
                 <div className="db-sidebar-logo">
                     <div className="logo-dots small">
                         <span className="logo-dot blue"></span>
@@ -423,6 +425,9 @@ export const TodoWrapper = () => {
                         <span className="logo-dot"></span>
                     </div>
                     <span className="db-sidebar-brand">Toodu</span>
+                    <button className="db-sidebar-close" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">
+                        <X size={18} />
+                    </button>
                 </div>
 
                 {/* Navigation Group */}
@@ -430,14 +435,20 @@ export const TodoWrapper = () => {
                     <span className="db-sidebar-section-title">Navigation</span>
                     <button
                         className={`sidebar-item ${activeTab === "home" ? "active" : ""}`}
-                        onClick={() => setActiveTab("home")}
+                        onClick={() => {
+                            setActiveTab("home");
+                            setIsSidebarOpen(false);
+                        }}
                     >
                         <ListTodo size={16} />
                         <span>Home</span>
                     </button>
                     <button
                         className={`sidebar-item ${activeTab === "calendar" ? "active" : ""}`}
-                        onClick={() => setActiveTab("calendar")}
+                        onClick={() => {
+                            setActiveTab("calendar");
+                            setIsSidebarOpen(false);
+                        }}
                     >
                         <LucideCalendar size={16} />
                         <span>Calendar View</span>
@@ -452,6 +463,7 @@ export const TodoWrapper = () => {
                         onClick={() => {
                             setActiveTab("home");
                             setActiveCategory("all");
+                            setIsSidebarOpen(false);
                         }}
                     >
                         <LayoutDashboard size={14} />
@@ -474,6 +486,7 @@ export const TodoWrapper = () => {
                                 onClick={() => {
                                     setActiveTab("home");
                                     setActiveCategory(cat);
+                                    setIsSidebarOpen(false);
                                 }}
                             >
                                 <span className={`cat-dot ${dotClass}`} style={customDotStyle}></span>
@@ -505,11 +518,18 @@ export const TodoWrapper = () => {
                 </div>
             </aside>
 
+            {isSidebarOpen && (
+                <div className="db-sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+            )}
+
             {/* Main Content Dashboard Panel */}
             <main className="db-content-area">
 
                 {/* Dashboard Header Bar */}
                 <header className="db-content-header">
+                    <button className="db-sidebar-toggle" onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar">
+                        <Menu size={18} />
+                    </button>
                     <div className="db-welcome-banner">
                         <CheckSquare size={16} className="db-welcome-icon" />
                         <span className="db-welcome-text">

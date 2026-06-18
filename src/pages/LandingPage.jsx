@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
@@ -6,12 +7,15 @@ import {
   Pin,
   Mail,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  Menu,
+  X
 } from 'lucide-react';
 import '../styles/LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div className="landing-page">
@@ -31,26 +35,42 @@ const LandingPage = () => {
             <span className="brand-name">TodoApps</span>
           </div>
 
-          <div className="nav-links">
-            <a href="#features">Features</a>
-            <a href="#benefits">Solutions</a>
-            <a href="#benefits">Resources</a>
-            <a href="#features">Pricing</a>
-          </div>
+          <button 
+            className="nav-menu-toggle" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
 
-          <div className="nav-buttons">
-            <button
-              className="nav-btn-text"
-              onClick={() => navigate('/login')}
-            >
-              Sign in
-            </button>
-            <button
-              className="nav-btn-primary"
-              onClick={() => navigate('/signup')}
-            >
-              Get demo
-            </button>
+          <div className={`nav-content-wrapper ${isMenuOpen ? 'active' : ''}`}>
+            <div className="nav-links">
+              <a href="#features" onClick={() => setIsMenuOpen(false)}>Features</a>
+              <a href="#benefits" onClick={() => setIsMenuOpen(false)}>Solutions</a>
+              <a href="#benefits" onClick={() => setIsMenuOpen(false)}>Resources</a>
+              <a href="#features" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+            </div>
+
+            <div className="nav-buttons">
+              <button
+                className="nav-btn-text"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  navigate('/login');
+                }}
+              >
+                Sign in
+              </button>
+              <button
+                className="nav-btn-primary"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  navigate('/signup');
+                }}
+              >
+                Get demo
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -574,7 +594,7 @@ const LandingPage = () => {
       {/* CTA Section */}
       <section className="cta-section">
         <div className="cta-container">
-          <span className="cta-badge">Join Us</span>
+          <span className="section-badge-pill">Join Us</span>
           <h2>Ready to Get Organized?</h2>
           <p>Join thousands of users who have transformed their focus and productivity today.</p>
           <button
