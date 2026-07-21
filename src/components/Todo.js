@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Calendar, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, X, Check, Pencil, Share2, Plus } from "lucide-react";
+import { useAuth } from "../context/AuthContext.jsx";
 
 // ── Inline SVG icons ──────────────────────────────────────────────
 const IconCircle = () => (
@@ -82,8 +83,15 @@ const formatDueDate = (dueDateStr) => {
 };
 
 // ── Component ──────────────────────────────────────────────────────
-export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask, deleteSubTask }) => {
+export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask, deleteSubTask, editSubTask, shareTodo, unshareTodo, addSubTask }) => {
+    const { user } = useAuth();
     const [showSubTasks, setShowSubTasks] = useState(false);
+    const [editingSubTaskId, setEditingSubTaskId] = useState(null);
+    const [editingSubTaskTitle, setEditingSubTaskTitle] = useState("");
+    const [showShareSection, setShowShareSection] = useState(false);
+    const [shareEmailInput, setShareEmailInput] = useState("");
+    const [newSubTaskTitle, setNewSubTaskTitle] = useState("");
+    const [sharing, setSharing] = useState(false);
 
     const cleanTitle = cleanLegacyTitle(task.task);
     const category = task.category || "personal";
@@ -93,11 +101,81 @@ export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask
 
     const subTasks = task.subTasks || [];
     const completedSubTasks = subTasks.filter(st => st.completed).length;
-    const hasSubTasks = subTasks.length > 0;
 
     const createdTime = task.createdAt
         ? new Date(task.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
         : null;
+
+    const isOwner = user && (task.userId === user.id || task.ownerEmail === user.email);
+
+    const handleEditSubTaskClick = (subTask) => {
+        setEditingSubTaskId(subTask.id);
+        setEditingSubTaskTitle(subTask.title);
+    };
+
+    const handleSubTaskSave = async (subTaskId) => {
+        const trimmed = editingSubTaskTitle.trim();
+        if (!trimmed) return;
+
+        const success = await editSubTask(task.id, subTaskId, trimmed);
+        if (success) {
+            setEditingSubTaskId(null);
+            setEditingSubTaskTitle("");
+        }
+    };
+
+    const handleSubTaskCancel = () => {
+        setEditingSubTaskId(null);
+        setEditingSubTaskTitle("");
+    };
+
+    const handleSubTaskEditKeyDown = (e, subTaskId) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleSubTaskSave(subTaskId);
+        } else if (e.key === "Escape") {
+            handleSubTaskCancel();
+        }
+    };
+
+    const handleShareSubmit = async (e) => {
+        e.preventDefault();
+        const email = shareEmailInput.trim().toLowerCase();
+        if (!email) return;
+
+        if (!/\S+@\S+\.\S+/.test(email)) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+
+        setSharing(true);
+        const success = await shareTodo(task.id, email);
+        setSharing(false);
+        if (success) {
+            setShareEmailInput("");
+        }
+    };
+
+    const handleUnshare = async (shareId) => {
+        await unshareTodo(task.id, shareId);
+    };
+
+    const handleNewSubTaskSave = async () => {
+        const trimmed = newSubTaskTitle.trim();
+        if (!trimmed) return;
+
+        const success = await addSubTask(task.id, trimmed);
+        if (success) {
+            setNewSubTaskTitle("");
+        }
+    };
+
+    const handleNewSubTaskKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleNewSubTaskSave();
+        }
+    };
 
     return (
         <div className={`todo-card${task.completed ? " todo-card--done" : ""}`}>
@@ -141,23 +219,39 @@ export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask
                                 {dueStatus?.status === "future" && <span>{formattedDue}</span>}
                             </span>
                         )}
-                        {hasSubTasks && (
-                            <button
-                                className="todo-subtask-toggle"
-                                onClick={() => setShowSubTasks(!showSubTasks)}
-                                aria-label={showSubTasks ? "Hide sub-tasks" : "Show sub-tasks"}
-                            >
+                        {!isOwner && task.ownerEmail && (
+                            <span className="todo-shared-badge" title={`Shared by ${task.ownerEmail}`}>
+                                Shared by {task.ownerEmail}
+                            </span>
+                        )}
+                        <button
+                            className="todo-subtask-toggle"
+                            onClick={() => setShowSubTasks(!showSubTasks)}
+                            aria-label={showSubTasks ? "Hide sub-tasks" : "Show sub-tasks"}
+                        >
+                            {subTasks.length > 0 ? (
                                 <span className="todo-subtask-progress">
                                     {completedSubTasks}/{subTasks.length}
                                 </span>
-                                {showSubTasks ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                            </button>
-                        )}
+                            ) : (
+                                <span className="todo-subtask-add-text">+ Add Sub-task</span>
+                            )}
+                            {showSubTasks ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        </button>
                     </div>
                 </div>
 
                 {/* Right: actions */}
                 <div className="todo-action-group">
+                    {isOwner && (
+                        <button
+                            className={`todo-icon-btn todo-icon-btn--share ${showShareSection ? "active" : ""}`}
+                            onClick={() => setShowShareSection(!showShareSection)}
+                            aria-label="Share task"
+                        >
+                            <Share2 size={14} />
+                        </button>
+                    )}
                     <button
                         className="todo-icon-btn todo-icon-btn--edit"
                         onClick={() => editTodo(task.id)}
@@ -175,33 +269,138 @@ export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask
                 </div>
             </div>
 
-            {/* Sub-tasks expandable section */}
-            {hasSubTasks && showSubTasks && (
-                <div className="todo-subtask-section">
-                    {subTasks.map((st) => (
-                        <div
-                            key={st.id}
-                            className={`todo-subtask-row ${st.completed ? "todo-subtask-row--done" : ""}`}
-                        >
-                            <button
-                                className={`todo-subtask-check ${st.completed ? "todo-subtask-check--done" : ""}`}
-                                onClick={() => toggleSubTask(task.id, st.id)}
-                                aria-label={st.completed ? "Mark sub-task incomplete" : "Mark sub-task complete"}
-                            >
-                                {st.completed ? <IconMiniCheck /> : <IconMiniCircle />}
-                            </button>
-                            <span className={`todo-subtask-title ${st.completed ? "todo-subtask-title--done" : ""}`}>
-                                {st.title}
-                            </span>
-                            <button
-                                className="todo-subtask-delete"
-                                onClick={() => deleteSubTask(task.id, st.id)}
-                                aria-label="Delete sub-task"
-                            >
-                                <X size={12} />
-                            </button>
+            {/* Share management section */}
+            {isOwner && showShareSection && (
+                <div className="todo-share-section">
+                    <span className="todo-share-title">Share Task</span>
+                    <form onSubmit={handleShareSubmit} className="todo-share-form">
+                        <input
+                            type="email"
+                            className="todo-share-input"
+                            placeholder="Enter user email..."
+                            value={shareEmailInput}
+                            onChange={(e) => setShareEmailInput(e.target.value)}
+                            required
+                        />
+                        <button type="submit" className="todo-share-btn" disabled={sharing}>
+                            {sharing ? "Adding..." : "Add"}
+                        </button>
+                    </form>
+
+                    {task.shares && task.shares.length > 0 && (
+                        <div className="todo-shares-list">
+                            <span className="todo-shares-subtitle">Access list:</span>
+                            <div className="todo-shares-chips">
+                                {task.shares.map((s) => (
+                                    <div key={s.id} className="todo-share-item">
+                                        <span className="todo-share-email">{s.email}</span>
+                                        <button
+                                            type="button"
+                                            className="todo-share-remove"
+                                            onClick={() => handleUnshare(s.id)}
+                                            aria-label="Revoke access"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    ))}
+                    )}
+                </div>
+            )}
+
+            {/* Sub-tasks expandable section */}
+            {showSubTasks && (
+                <div className="todo-subtask-section">
+                    {subTasks.map((st) => {
+                        const isEditingThis = editingSubTaskId === st.id;
+                        return (
+                            <div
+                                key={st.id}
+                                className={`todo-subtask-row ${st.completed ? "todo-subtask-row--done" : ""} ${isEditingThis ? "todo-subtask-row--editing" : ""}`}
+                            >
+                                {isEditingThis ? (
+                                    <>
+                                        <input
+                                            type="text"
+                                            className="todo-subtask-edit-input"
+                                            value={editingSubTaskTitle}
+                                            onChange={(e) => setEditingSubTaskTitle(e.target.value)}
+                                            onKeyDown={(e) => handleSubTaskEditKeyDown(e, st.id)}
+                                            autoFocus
+                                        />
+                                        <div className="todo-subtask-edit-actions">
+                                            <button
+                                                className="todo-subtask-action-btn todo-subtask-action-btn--save"
+                                                onClick={() => handleSubTaskSave(st.id)}
+                                                aria-label="Save sub-task"
+                                                disabled={!editingSubTaskTitle.trim()}
+                                            >
+                                                <Check size={12} />
+                                            </button>
+                                            <button
+                                                className="todo-subtask-action-btn todo-subtask-action-btn--cancel"
+                                                onClick={handleSubTaskCancel}
+                                                aria-label="Cancel editing"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            className={`todo-subtask-check ${st.completed ? "todo-subtask-check--done" : ""}`}
+                                            onClick={() => toggleSubTask(task.id, st.id)}
+                                            aria-label={st.completed ? "Mark sub-task incomplete" : "Mark sub-task complete"}
+                                        >
+                                            {st.completed ? <IconMiniCheck /> : <IconMiniCircle />}
+                                        </button>
+                                        <span className={`todo-subtask-title ${st.completed ? "todo-subtask-title--done" : ""}`}>
+                                            {st.title}
+                                        </span>
+                                        <div className="todo-subtask-action-group">
+                                            <button
+                                                className="todo-subtask-edit"
+                                                onClick={() => handleEditSubTaskClick(st)}
+                                                aria-label="Edit sub-task"
+                                            >
+                                                <Pencil size={12} />
+                                            </button>
+                                            <button
+                                                className="todo-subtask-delete"
+                                                onClick={() => deleteSubTask(task.id, st.id)}
+                                                aria-label="Delete sub-task"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {/* Add a new sub-task inline at the bottom */}
+                    <div className="todo-subtask-row todo-subtask-add-row">
+                        <input
+                            type="text"
+                            className="todo-subtask-add-input"
+                            placeholder="Add a sub-task..."
+                            value={newSubTaskTitle}
+                            onChange={(e) => setNewSubTaskTitle(e.target.value)}
+                            onKeyDown={handleNewSubTaskKeyDown}
+                        />
+                        <button
+                            className="todo-subtask-add-btn"
+                            onClick={handleNewSubTaskSave}
+                            disabled={!newSubTaskTitle.trim()}
+                            aria-label="Add sub-task"
+                        >
+                            <Plus size={12} />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

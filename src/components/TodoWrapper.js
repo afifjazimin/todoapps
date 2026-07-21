@@ -16,7 +16,7 @@ import { EditTodoForm } from "./EditTodoForm.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../supabaseClient.js";
 
-const mapSupabaseTodo = (todo, subTasks = []) => ({
+const mapSupabaseTodo = (todo, subTasks = [], shares = []) => ({
     id: todo.id,
     task: todo.title,
     completed: todo.is_completed,
@@ -24,10 +24,16 @@ const mapSupabaseTodo = (todo, subTasks = []) => ({
     createdAt: todo.created_at,
     category: todo.category || extractLegacyCategory(todo.title),
     dueDate: todo.due_date || null,
+    userId: todo.user_id,
+    ownerEmail: todo.owner_email,
     subTasks: subTasks.map(st => ({
         id: st.id,
         title: st.title,
         completed: st.is_completed,
+    })),
+    shares: shares.map(s => ({
+        id: s.id,
+        email: s.shared_with_email,
     })),
 });
 
@@ -73,7 +79,7 @@ export const TodoWrapper = () => {
         // Fetch todos with new columns
         const { data: todosData, error: todosError } = await supabase
             .from("todos")
-            .select("id,title,is_completed,created_at,category,due_date")
+            .select("id,title,is_completed,created_at,category,due_date,user_id,owner_email")
             .order("created_at", { ascending: false });
 
         if (todosError) {
@@ -85,6 +91,7 @@ export const TodoWrapper = () => {
         // Fetch all sub_tasks for this user
         const todoIds = (todosData ?? []).map(t => t.id);
         let subTasksMap = {};
+        let sharesMap = {};
 
         if (todoIds.length > 0) {
             const { data: subTasksData, error: subTasksError } = await supabase
@@ -99,9 +106,22 @@ export const TodoWrapper = () => {
                     subTasksMap[st.todo_id].push(st);
                 });
             }
+
+            // Fetch all shares for these todos
+            const { data: sharesData, error: sharesError } = await supabase
+                .from("todo_shares")
+                .select("id,todo_id,shared_with_email")
+                .in("todo_id", todoIds);
+
+            if (!sharesError && sharesData) {
+                sharesData.forEach(s => {
+                    if (!sharesMap[s.todo_id]) sharesMap[s.todo_id] = [];
+                    sharesMap[s.todo_id].push(s);
+                });
+            }
         }
 
-        setTodos((todosData ?? []).map(todo => mapSupabaseTodo(todo, subTasksMap[todo.id] || [])));
+        setTodos((todosData ?? []).map(todo => mapSupabaseTodo(todo, subTasksMap[todo.id] || [], sharesMap[todo.id] || [])));
         setLoadingTodos(false);
     }, [user]);
 
@@ -119,6 +139,7 @@ export const TodoWrapper = () => {
             title: task,
             user_id: user.id,
             category: category || "personal",
+            owner_email: user.email,
         };
         if (dueDate) {
             insertData.due_date = dueDate;
@@ -127,7 +148,7 @@ export const TodoWrapper = () => {
         const { data, error } = await supabase
             .from("todos")
             .insert([insertData])
-            .select("id,title,is_completed,created_at,category,due_date")
+            .select("id,title,is_completed,created_at,category,due_date,user_id,owner_email")
             .single();
 
         if (error) {
@@ -157,7 +178,7 @@ export const TodoWrapper = () => {
             }
         }
 
-        setTodos(currentTodos => [mapSupabaseTodo(data, insertedSubTasks), ...currentTodos]);
+        setTodos(currentTodos => [mapSupabaseTodo(data, insertedSubTasks, []), ...currentTodos]);
         return true;
     };
 
@@ -282,6 +303,114 @@ export const TodoWrapper = () => {
                 subTasks: t.subTasks.filter(st => st.id !== subTaskId),
             };
         }));
+    };
+
+    const editSubTask = async (todoId, subTaskId, newTitle) => {
+        if (!supabase) return false;
+
+        setActionError("");
+
+        const { error } = await supabase
+            .from("sub_tasks")
+            .update({ title: newTitle })
+            .eq("id", subTaskId);
+
+        if (error) {
+            setActionError(error.message);
+            return false;
+        }
+
+        setTodos(todos.map(t => {
+            if (t.id !== todoId) return t;
+            return {
+                ...t,
+                subTasks: t.subTasks.map(st =>
+                    st.id === subTaskId ? { ...st, title: newTitle } : st
+                ),
+            };
+        }));
+        return true;
+    };
+
+    const shareTodo = async (todoId, email) => {
+        if (!supabase) return false;
+
+        setActionError("");
+
+        const { data, error } = await supabase
+            .from("todo_shares")
+            .insert([{ todo_id: todoId, shared_with_email: email, user_id: user.id }])
+            .select("id,todo_id,shared_with_email")
+            .single();
+
+        if (error) {
+            setActionError(error.message);
+            return false;
+        }
+
+        setTodos(todos.map(t => {
+            if (t.id !== todoId) return t;
+            return {
+                ...t,
+                shares: [...(t.shares || []), { id: data.id, email: data.shared_with_email }],
+            };
+        }));
+        return true;
+    };
+
+    const unshareTodo = async (todoId, shareId) => {
+        if (!supabase) return false;
+
+        setActionError("");
+
+        const { error } = await supabase
+            .from("todo_shares")
+            .delete()
+            .eq("id", shareId);
+
+        if (error) {
+            setActionError(error.message);
+            return false;
+        }
+
+        setTodos(todos.map(t => {
+            if (t.id !== todoId) return t;
+            return {
+                ...t,
+                shares: (t.shares || []).filter(s => s.id !== shareId),
+            };
+        }));
+        return true;
+    };
+
+    const addSubTask = async (todoId, title) => {
+        if (!supabase || !user) return false;
+
+        setActionError("");
+
+        const { data, error } = await supabase
+            .from("sub_tasks")
+            .insert([{ todo_id: todoId, title, user_id: user.id }])
+            .select("id,todo_id,title,is_completed")
+            .single();
+
+        if (error) {
+            setActionError(error.message);
+            return false;
+        }
+
+        setTodos(todos.map(t => {
+            if (t.id !== todoId) return t;
+            return {
+                ...t,
+                subTasks: [...t.subTasks, {
+                    id: data.id,
+                    title: data.title,
+                    completed: data.is_completed,
+                }],
+            };
+        }));
+        return true;
     };
 
     const handleLogout = async () => {
@@ -566,6 +695,10 @@ export const TodoWrapper = () => {
                                     editTodo={editTodo}
                                     toggleSubTask={toggleSubTask}
                                     deleteSubTask={deleteSubTask}
+                                    editSubTask={editSubTask}
+                                    shareTodo={shareTodo}
+                                    unshareTodo={unshareTodo}
+                                    addSubTask={addSubTask}
                                 />
                             )
                         ))}
@@ -682,6 +815,10 @@ export const TodoWrapper = () => {
                                                     editTodo={editTodo}
                                                     toggleSubTask={toggleSubTask}
                                                     deleteSubTask={deleteSubTask}
+                                                    editSubTask={editSubTask}
+                                                    shareTodo={shareTodo}
+                                                    unshareTodo={unshareTodo}
+                                                    addSubTask={addSubTask}
                                                 />
                                             )
                                         ))
