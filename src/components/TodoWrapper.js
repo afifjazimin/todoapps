@@ -678,7 +678,7 @@ export const TodoWrapper = () => {
                         <TodoForm categories={categoriesList} addTodo={addTodo} />
 
                         {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '16px' }}>{actionError}</div>}
-                        {loadingTodos && <p className="todo-empty">Loading your tasks...</p>}
+                        {loadingTodos && todos.length === 0 && <p className="todo-empty">Loading your tasks...</p>}
                         {!loadingTodos && filteredTodos.length === 0 && (
                             <p className="todo-empty">No tasks categorized under this group yet.</p>
                         )}
