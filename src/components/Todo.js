@@ -47,7 +47,7 @@ const IconMiniCheck = () => (
 
 
 // ── Category config ────────────────────────────────────────────────
-const CAT_CONFIG = {
+export const CAT_CONFIG = {
     work:     { color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  label: "Work" },
     personal: { color: "#f97316", bg: "rgba(249,115,22,0.1)",  label: "Personal" },
     shopping: { color: "#8b5cf6", bg: "rgba(139,92,246,0.1)",  label: "Shopping" },
@@ -55,12 +55,12 @@ const CAT_CONFIG = {
 };
 
 // Clean legacy hashtag from displayed title
-const cleanLegacyTitle = (title = "") => {
+export const cleanLegacyTitle = (title = "") => {
     return title.replace(/\s*#(work|personal|shopping|fitness)/i, "").trim();
 };
 
 // Due date status helper
-const getDueDateStatus = (dueDateStr) => {
+export const getDueDateStatus = (dueDateStr) => {
     if (!dueDateStr) return null;
 
     const today = new Date();
@@ -76,16 +76,16 @@ const getDueDateStatus = (dueDateStr) => {
     return { status: "future", label: null, className: "todo-due-badge--future" };
 };
 
-const formatDueDate = (dueDateStr) => {
+export const formatDueDate = (dueDateStr) => {
     if (!dueDateStr) return "";
     const date = new Date(dueDateStr + "T00:00:00");
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
 // ── Component ──────────────────────────────────────────────────────
-export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask, deleteSubTask, editSubTask, shareTodo, unshareTodo, addSubTask }) => {
+export const Todo = ({ task, toggleComplete, deleteTodo, editTodo, toggleSubTask, deleteSubTask, editSubTask, shareTodo, unshareTodo, addSubTask, defaultShowSubTasks = false }) => {
     const { user } = useAuth();
-    const [showSubTasks, setShowSubTasks] = useState(false);
+    const [showSubTasks, setShowSubTasks] = useState(defaultShowSubTasks);
     const [editingSubTaskId, setEditingSubTaskId] = useState(null);
     const [editingSubTaskTitle, setEditingSubTaskTitle] = useState("");
     const [showShareSection, setShowShareSection] = useState(false);

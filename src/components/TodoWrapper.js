@@ -8,13 +8,33 @@ import {
     ChevronRight,
     LayoutDashboard,
     Menu,
-    X
+    X,
+    Bot
 } from "lucide-react";
 import { TodoForm } from "./TodoForm";
 import { Todo } from "./Todo.js";
 import { EditTodoForm } from "./EditTodoForm.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../supabaseClient.js";
+import { BoardView } from "./board/BoardView";
+import { ViewToggle } from "./board/ViewToggle";
+import { TelegramConnectModal } from "./TelegramConnectModal";
+import {
+    COLUMN_COLORS,
+    completionAfterMove,
+    firstDoneColumn,
+    firstOpenColumn,
+    mapSupabaseColumn,
+    positionAtTop,
+    resolveColumnId,
+} from "./board/boardUtils";
+
+const TODO_SELECT_BASE = "id,title,is_completed,created_at,category,due_date,user_id,owner_email";
+const TODO_SELECT_BOARD = `${TODO_SELECT_BASE},column_id,position`;
+const COLUMN_SELECT = "id,name,color,position,is_done";
+const VIEW_MODE_KEY = "toodu:viewMode";
+
+const byPosition = (a, b) => a.position - b.position;
 
 const mapSupabaseTodo = (todo, subTasks = [], shares = []) => ({
     id: todo.id,
@@ -26,6 +46,8 @@ const mapSupabaseTodo = (todo, subTasks = [], shares = []) => ({
     dueDate: todo.due_date || null,
     userId: todo.user_id,
     ownerEmail: todo.owner_email,
+    columnId: todo.column_id ?? null,
+    position: typeof todo.position === "number" ? todo.position : null,
     subTasks: subTasks.map(st => ({
         id: st.id,
         title: st.title,
@@ -55,6 +77,27 @@ export const TodoWrapper = () => {
     const [selectedCalendarDate, setSelectedCalendarDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+
+    // Board view state
+    const [columns, setColumns] = useState([]);
+    const [boardEnabled, setBoardEnabled] = useState(null); // null = loading, false = migration missing
+    const [boardError, setBoardError] = useState("");
+    const [viewMode, setViewMode] = useState(() => {
+        try {
+            return localStorage.getItem(VIEW_MODE_KEY) === "list" ? "list" : "board";
+        } catch {
+            return "board";
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(VIEW_MODE_KEY, viewMode);
+        } catch {
+            // ignore storage errors (private mode etc.)
+        }
+    }, [viewMode]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -76,10 +119,24 @@ export const TodoWrapper = () => {
         setLoadingTodos(true);
         setActionError("");
 
+        // Board columns (creates defaults + backfills on first run).
+        // If the board migration hasn't been run yet, fall back to list-only mode.
+        const { data: columnsData, error: columnsError } = await supabase.rpc("ensure_board_columns");
+        const boardOk = !columnsError;
+        if (columnsError) {
+            setBoardEnabled(false);
+            setBoardError(columnsError.message);
+            setColumns([]);
+        } else {
+            setBoardEnabled(true);
+            setBoardError("");
+            setColumns((columnsData ?? []).map(mapSupabaseColumn).sort(byPosition));
+        }
+
         // Fetch todos with new columns
         const { data: todosData, error: todosError } = await supabase
             .from("todos")
-            .select("id,title,is_completed,created_at,category,due_date,user_id,owner_email")
+            .select(boardOk ? TODO_SELECT_BOARD : TODO_SELECT_BASE)
             .order("created_at", { ascending: false });
 
         if (todosError) {
@@ -129,7 +186,10 @@ export const TodoWrapper = () => {
         fetchTodos();
     }, [fetchTodos]);
 
-    const addTodo = async ({ task, dueDate, category, subTasks }) => {
+    const ownTodosInColumn = (columnId, list = todos) =>
+        list.filter(t => t.userId === user?.id && resolveColumnId(t, columns) === columnId);
+
+    const addTodo = async ({ task, dueDate, category, subTasks, columnId }) => {
         if (!user || !supabase) return false;
 
         setActionError("");
@@ -145,10 +205,18 @@ export const TodoWrapper = () => {
             insertData.due_date = dueDate;
         }
 
+        // Board placement: requested column, otherwise the first non-Done column (at the top)
+        if (boardEnabled && columns.length > 0) {
+            const target = columns.find(c => c.id === columnId) || firstOpenColumn(columns);
+            insertData.column_id = target.id;
+            insertData.position = positionAtTop(ownTodosInColumn(target.id));
+            if (target.isDone) insertData.is_completed = true;
+        }
+
         const { data, error } = await supabase
             .from("todos")
             .insert([insertData])
-            .select("id,title,is_completed,created_at,category,due_date,user_id,owner_email")
+            .select(boardEnabled ? TODO_SELECT_BOARD : TODO_SELECT_BASE)
             .single();
 
         if (error) {
@@ -188,9 +256,27 @@ export const TodoWrapper = () => {
 
         setActionError("");
 
+        const nextCompleted = !currentTodo.completed;
+        const updateData = { is_completed: nextCompleted };
+
+        // On the owner's board, ticking moves the card into the Done column and
+        // unticking moves it back to the first open column.
+        if (boardEnabled && columns.length > 0 && currentTodo.userId === user?.id) {
+            const currentColumnId = resolveColumnId(currentTodo, columns);
+            const currentColumn = columns.find(c => c.id === currentColumnId);
+            let target = null;
+            if (nextCompleted && !currentColumn?.isDone) target = firstDoneColumn(columns);
+            if (!nextCompleted && currentColumn?.isDone) target = columns.find(c => !c.isDone) || null;
+
+            if (target && target.id !== currentColumnId) {
+                updateData.column_id = target.id;
+                updateData.position = positionAtTop(ownTodosInColumn(target.id));
+            }
+        }
+
         const { error } = await supabase
             .from("todos")
-            .update({ is_completed: !currentTodo.completed })
+            .update(updateData)
             .eq("id", id);
 
         if (error) {
@@ -198,7 +284,158 @@ export const TodoWrapper = () => {
             return;
         }
 
-        setTodos(todos.map(todo => todo.id === id ? { ...todo, completed: !todo.completed } : todo));
+        setTodos(prev => prev.map(todo => todo.id === id ? {
+            ...todo,
+            completed: nextCompleted,
+            ...(updateData.column_id ? { columnId: updateData.column_id, position: updateData.position } : {}),
+        } : todo));
+    };
+
+    // ── Board handlers ─────────────────────────────────────────────
+
+    const moveTodo = async (todoId, columnId, position) => {
+        if (!supabase) return;
+        const todo = todos.find(t => t.id === todoId);
+        const toColumn = columns.find(c => c.id === columnId);
+        if (!todo || !toColumn) return;
+
+        const fromColumn = columns.find(c => c.id === resolveColumnId(todo, columns));
+        const completed = completionAfterMove(todo, fromColumn, toColumn);
+
+        setActionError("");
+        // Optimistic (synchronous) so the board doesn't flash the old order
+        setTodos(prev => prev.map(t => t.id === todoId ? { ...t, columnId, position, completed } : t));
+
+        const { error } = await supabase
+            .from("todos")
+            .update({ column_id: columnId, position, is_completed: completed })
+            .eq("id", todoId);
+
+        if (error) {
+            setActionError(error.message);
+            setTodos(prev => prev.map(t => t.id === todoId ? todo : t));
+        }
+    };
+
+    const addTaskToColumn = (columnId, title) => addTodo({
+        task: title,
+        category: activeCategory !== "all" ? activeCategory : "personal",
+        subTasks: [],
+        columnId,
+    });
+
+    const addColumn = async (name) => {
+        if (!supabase || !user) return false;
+        setActionError("");
+
+        const position = columns.length > 0 ? Math.max(...columns.map(c => c.position)) + 1000 : 1000;
+        const color = COLUMN_COLORS[columns.length % COLUMN_COLORS.length];
+
+        const { data, error } = await supabase
+            .from("board_columns")
+            .insert([{ user_id: user.id, name, color, position }])
+            .select(COLUMN_SELECT)
+            .single();
+
+        if (error) {
+            setActionError(error.message);
+            return false;
+        }
+
+        setColumns(prev => [...prev, mapSupabaseColumn(data)].sort(byPosition));
+        return true;
+    };
+
+    // patch uses app field names: { name, color, isDone, position }
+    const updateColumn = async (columnId, patch) => {
+        if (!supabase) return false;
+        const column = columns.find(c => c.id === columnId);
+        if (!column) return false;
+
+        setActionError("");
+
+        const dbPatch = {};
+        if ("name" in patch) dbPatch.name = patch.name;
+        if ("color" in patch) dbPatch.color = patch.color;
+        if ("position" in patch) dbPatch.position = patch.position;
+        if ("isDone" in patch) dbPatch.is_done = patch.isDone;
+
+        setColumns(prev => prev.map(c => c.id === columnId ? { ...c, ...patch } : c).sort(byPosition));
+
+        const { error } = await supabase.from("board_columns").update(dbPatch).eq("id", columnId);
+        if (error) {
+            setActionError(error.message);
+            setColumns(prev => prev.map(c => c.id === columnId ? column : c).sort(byPosition));
+            return false;
+        }
+
+        // Marking / unmarking a Done column syncs completion of the tasks inside it
+        if ("isDone" in patch && patch.isDone !== column.isDone) {
+            const ids = ownTodosInColumn(columnId)
+                .filter(t => t.completed !== patch.isDone)
+                .map(t => t.id);
+
+            if (ids.length > 0) {
+                const { error: syncError } = await supabase
+                    .from("todos")
+                    .update({ is_completed: patch.isDone })
+                    .in("id", ids);
+
+                if (syncError) {
+                    setActionError(syncError.message);
+                } else {
+                    setTodos(prev => prev.map(t => ids.includes(t.id) ? { ...t, completed: patch.isDone } : t));
+                }
+            }
+        }
+        return true;
+    };
+
+    const renameColumn = (columnId, name) => updateColumn(columnId, { name });
+    const reorderColumn = (columnId, position) => updateColumn(columnId, { position });
+
+    const deleteColumn = async (columnId, targetColumnId) => {
+        if (!supabase) return false;
+        const column = columns.find(c => c.id === columnId);
+        if (!column || columns.length <= 1) return false;
+
+        setActionError("");
+
+        const affected = ownTodosInColumn(columnId);
+        const target = columns.find(c => c.id === targetColumnId) || columns.find(c => c.id !== columnId);
+
+        // Move tasks out first so nothing is orphaned
+        if (affected.length > 0 && target) {
+            const movePatch = { column_id: target.id };
+            if (target.isDone) movePatch.is_completed = true;
+            else if (column.isDone) movePatch.is_completed = false;
+
+            const { error: moveError } = await supabase
+                .from("todos")
+                .update(movePatch)
+                .in("id", affected.map(t => t.id));
+
+            if (moveError) {
+                setActionError(moveError.message);
+                return false;
+            }
+
+            const affectedIds = new Set(affected.map(t => t.id));
+            setTodos(prev => prev.map(t => affectedIds.has(t.id) ? {
+                ...t,
+                columnId: target.id,
+                completed: "is_completed" in movePatch ? movePatch.is_completed : t.completed,
+            } : t));
+        }
+
+        const { error } = await supabase.from("board_columns").delete().eq("id", columnId);
+        if (error) {
+            setActionError(error.message);
+            return false;
+        }
+
+        setColumns(prev => prev.filter(c => c.id !== columnId));
+        return true;
     };
 
     const deleteTodo = async id => {
@@ -582,6 +819,18 @@ export const TodoWrapper = () => {
                         <LucideCalendar size={16} />
                         <span>Calendar View</span>
                     </button>
+                    <button
+                        className="sidebar-item"
+                        onClick={() => {
+                            setIsTelegramModalOpen(true);
+                            setIsSidebarOpen(false);
+                        }}
+                        style={{ color: "#2563eb" }}
+                    >
+                        <Bot size={16} />
+                        <span>Telegram Bot</span>
+                        <span className="cat-count" style={{ background: "#eff6ff", color: "#2563eb", fontSize: "10px", padding: "1px 6px" }}>NEW</span>
+                    </button>
                 </div>
 
                 {/* Categories Group (only active in Home Tab) */}
@@ -671,37 +920,83 @@ export const TodoWrapper = () => {
                 {/* View Content Panels */}
                 {activeTab === "home" ? (
                     <div className="db-tasks-view">
-                        <h2 className="db-view-heading">
-                            {activeCategory === "all" ? "Today's Focus" : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Focus`}
-                        </h2>
+                        <div className="db-tasks-header-row">
+                            <h2 className="db-view-heading">
+                                {activeCategory === "all" ? "Today's Focus" : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Focus`}
+                            </h2>
+                            <ViewToggle value={boardEnabled === false ? "list" : viewMode} onChange={setViewMode} />
+                        </div>
+
+                        {boardEnabled === false && (
+                            <div className="board-migration-banner">
+                                <strong>Board View Setup Required:</strong>
+                                <span>
+                                    Please run the SQL migration in Supabase SQL Editor from <code>docs/SUPABASE_BOARD_MIGRATION.sql</code> to enable custom board columns.
+                                </span>
+                                {boardError && <small style={{ color: '#b45309', opacity: 0.85 }}>{boardError}</small>}
+                            </div>
+                        )}
 
                         <TodoForm categories={categoriesList} addTodo={addTodo} />
 
                         {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '16px' }}>{actionError}</div>}
                         {loadingTodos && todos.length === 0 && <p className="todo-empty">Loading your tasks...</p>}
-                        {!loadingTodos && filteredTodos.length === 0 && (
-                            <p className="todo-empty">No tasks categorized under this group yet.</p>
-                        )}
 
-                        {filteredTodos.map((todo) => (
-                            todo.isEditing ? (
-                                <EditTodoForm key={todo.id} categories={categoriesList} editTodo={editTask} task={todo} />
-                            ) : (
-                                <Todo
-                                    task={todo}
-                                    key={todo.id}
-                                    toggleComplete={toggleComplete}
-                                    deleteTodo={deleteTodo}
-                                    editTodo={editTodo}
-                                    toggleSubTask={toggleSubTask}
-                                    deleteSubTask={deleteSubTask}
-                                    editSubTask={editSubTask}
-                                    shareTodo={shareTodo}
-                                    unshareTodo={unshareTodo}
-                                    addSubTask={addSubTask}
-                                />
-                            )
-                        ))}
+                        {viewMode === "board" && boardEnabled ? (
+                            <BoardView
+                                columns={columns}
+                                todos={filteredTodos}
+                                allTodos={todos}
+                                userId={user?.id}
+                                categories={categoriesList}
+                                taskHandlers={{
+                                    editTask,
+                                    toggleComplete,
+                                    deleteTodo,
+                                    editTodo,
+                                    toggleSubTask,
+                                    deleteSubTask,
+                                    editSubTask,
+                                    shareTodo,
+                                    unshareTodo,
+                                    addSubTask,
+                                }}
+                                onToggleComplete={toggleComplete}
+                                onMoveTodo={moveTodo}
+                                onAddTask={addTaskToColumn}
+                                onAddColumn={addColumn}
+                                onRenameColumn={renameColumn}
+                                onUpdateColumn={updateColumn}
+                                onDeleteColumn={deleteColumn}
+                                onReorderColumn={reorderColumn}
+                            />
+                        ) : (
+                            <>
+                                {!loadingTodos && filteredTodos.length === 0 && (
+                                    <p className="todo-empty">No tasks categorized under this group yet.</p>
+                                )}
+
+                                {filteredTodos.map((todo) => (
+                                    todo.isEditing ? (
+                                        <EditTodoForm key={todo.id} categories={categoriesList} editTodo={editTask} task={todo} />
+                                    ) : (
+                                        <Todo
+                                            task={todo}
+                                            key={todo.id}
+                                            toggleComplete={toggleComplete}
+                                            deleteTodo={deleteTodo}
+                                            editTodo={editTodo}
+                                            toggleSubTask={toggleSubTask}
+                                            deleteSubTask={deleteSubTask}
+                                            editSubTask={editSubTask}
+                                            shareTodo={shareTodo}
+                                            unshareTodo={unshareTodo}
+                                            addSubTask={addSubTask}
+                                        />
+                                    )
+                                ))}
+                            </>
+                        )}
                     </div>
                 ) : (
                     // Calendar View — Split Layout
@@ -829,6 +1124,11 @@ export const TodoWrapper = () => {
                     </div>
                 )}
             </main>
+
+            <TelegramConnectModal
+                isOpen={isTelegramModalOpen}
+                onClose={() => setIsTelegramModalOpen(false)}
+            />
         </div>
     );
 };
