@@ -1,5 +1,6 @@
 import React from "react";
 import { LayoutList, SquareKanban } from "lucide-react";
+import "../../styles/Board.css";
 
 const OPTIONS = [
     { value: "list", label: "List", Icon: LayoutList },

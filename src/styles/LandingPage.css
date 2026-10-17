@@ -51,7 +51,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.landing-page * {
+/* :where() keeps this reset at zero specificity so any component class
+   (e.g. Board.css) can set padding/margin regardless of load order. */
+:where(.landing-page) :where(*) {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
