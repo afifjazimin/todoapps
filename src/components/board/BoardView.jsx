@@ -87,6 +87,7 @@ export const BoardView = ({
     allTodos,
     userId,
     categories,
+    loading = false,
     taskHandlers,
     onToggleComplete,
     onMoveTodo,
@@ -295,6 +296,7 @@ export const BoardView = ({
                                         cardIds={cardIds}
                                         tasks={cardIds.map(id => todoById[fromCardId(id)]).filter(Boolean)}
                                         canDelete={columns.length > 1}
+                                        loading={loading}
                                         onOpenTask={setOpenTaskId}
                                         onToggleComplete={onToggleComplete}
                                         onAddTask={onAddTask}

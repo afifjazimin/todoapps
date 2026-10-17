@@ -9,7 +9,8 @@ import {
     LayoutDashboard,
     Menu,
     X,
-    Bot
+    Bot,
+    Loader2
 } from "lucide-react";
 import { TodoForm } from "./TodoForm";
 import { Todo } from "./Todo.js";
@@ -940,7 +941,6 @@ export const TodoWrapper = () => {
                         <TodoForm categories={categoriesList} addTodo={addTodo} />
 
                         {actionError && <div className="modern-auth-alert error" style={{ marginBottom: '16px' }}>{actionError}</div>}
-                        {loadingTodos && todos.length === 0 && <p className="todo-empty">Loading your tasks...</p>}
 
                         {viewMode === "board" && boardEnabled ? (
                             <BoardView
@@ -949,6 +949,7 @@ export const TodoWrapper = () => {
                                 allTodos={todos}
                                 userId={user?.id}
                                 categories={categoriesList}
+                                loading={loadingTodos && todos.length === 0}
                                 taskHandlers={{
                                     editTask,
                                     toggleComplete,
@@ -972,9 +973,16 @@ export const TodoWrapper = () => {
                             />
                         ) : (
                             <>
-                                {!loadingTodos && filteredTodos.length === 0 && (
-                                    <p className="todo-empty">No tasks categorized under this group yet.</p>
-                                )}
+                                {loadingTodos && todos.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
+                                        <Loader2 size={24} className="animate-spin text-blue-500" />
+                                        <span className="text-xs font-medium tracking-wide">Loading your tasks...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {filteredTodos.length === 0 && (
+                                            <p className="todo-empty">No tasks categorized under this group yet.</p>
+                                        )}
 
                                 {filteredTodos.map((todo) => (
                                     todo.isEditing ? (
@@ -997,7 +1005,9 @@ export const TodoWrapper = () => {
                                 ))}
                             </>
                         )}
-                    </div>
+                    </>
+                )}
+            </div>
                 ) : (
                     // Calendar View — Split Layout
                     <div className="db-calendar-view">

@@ -65,6 +65,7 @@ export const BoardColumn = ({
     tasks,
     cardIds,
     canDelete,
+    loading = false,
     onOpenTask,
     onToggleComplete,
     onAddTask,
@@ -169,26 +170,35 @@ export const BoardColumn = ({
             </div>
 
             <div className="board-column-body">
-                <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-                    {cardIds.map(cardId => {
-                        const task = taskById[cardId];
-                        if (!task) return null;
-                        return (
-                            <SortableBoardCard
-                                key={cardId}
-                                task={task}
-                                columnId={column.id}
-                                onOpen={onOpenTask}
-                                onToggleComplete={onToggleComplete}
-                            />
-                        );
-                    })}
-                </SortableContext>
-                {cardIds.length === 0 && (
-                    <div className="board-column-empty">
-                        <Inbox size={18} />
-                        <span>Drop tasks here</span>
+                {loading ? (
+                    <div className="board-column-loading">
+                        <div className="board-card-skeleton" />
+                        <div className="board-card-skeleton" style={{ opacity: 0.6 }} />
                     </div>
+                ) : (
+                    <>
+                        <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+                            {cardIds.map(cardId => {
+                                const task = taskById[cardId];
+                                if (!task) return null;
+                                return (
+                                    <SortableBoardCard
+                                        key={cardId}
+                                        task={task}
+                                        columnId={column.id}
+                                        onOpen={onOpenTask}
+                                        onToggleComplete={onToggleComplete}
+                                    />
+                                );
+                            })}
+                        </SortableContext>
+                        {cardIds.length === 0 && (
+                            <div className="board-column-empty">
+                                <Inbox size={18} />
+                                <span>Drop tasks here</span>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </section>
